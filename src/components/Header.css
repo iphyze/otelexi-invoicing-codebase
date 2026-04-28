@@ -1,0 +1,513 @@
+/* =============================================
+   HEADER — OTELEX
+   Search left-anchored; mobile search icon
+   ============================================= */
+
+/* ── Base ────────────────────────────────────── */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 260px;
+  right: 0;
+  height: 75px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 800;
+  gap: 16px;
+  transition: background 0.3s, border-color 0.3s, left 0.3s;
+}
+
+.app-header.theme-dark {
+  background: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.app-header.theme-light {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Left ────────────────────────────────────── */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Takes up remaining space so search bar fills it */
+  flex: 1;
+  min-width: 0;
+}
+
+/* Logo — mobile only */
+.header-logo-link {
+  display: none;
+}
+
+.header-logo-img {
+  height: 30px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+  object-position: left center;
+  display: block;
+}
+
+/* Hamburger — mobile only */
+.hamburger-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.18s, color 0.18s;
+}
+
+.theme-dark .hamburger-btn {
+  color: #94a3b8;
+}
+
+.theme-light .hamburger-btn {
+  color: #64748b;
+}
+
+.hamburger-btn:hover {
+  background: rgba(26, 86, 219, 0.1);
+  color: #1a56db;
+}
+
+/* Desktop search container — left-anchored, max-width capped */
+.header-search-desktop {
+  flex: 1;
+  max-width: 400px;
+  /* keeps it from stretching all the way across */
+  min-width: 0;
+}
+
+/* ── Right ───────────────────────────────────── */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Icon buttons ────────────────────────────── */
+.header-icon-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background 0.18s, color 0.18s;
+}
+
+.theme-dark .header-icon-btn {
+  color: #94a3b8;
+}
+
+.theme-light .header-icon-btn {
+  color: #64748b;
+}
+
+.header-icon-btn:hover {
+  background: rgba(26, 86, 219, 0.1);
+  color: #1a56db;
+}
+
+/* Mobile search icon — hidden on desktop */
+.mobile-search-btn {
+  display: none;
+}
+
+/* Notification badge */
+.notif-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  pointer-events: none;
+}
+
+/* ── Avatar ──────────────────────────────────── */
+.avatar-wrapper {
+  position: relative;
+  margin-left: 8px;
+}
+
+.avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 9px 5px 5px;
+  border: none;
+  border-radius: 11px;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.18s;
+}
+
+.theme-dark .avatar-btn {
+  color: #e2e8f0;
+}
+
+.theme-light .avatar-btn {
+  color: #1e293b;
+}
+
+.avatar-btn:hover,
+.avatar-btn.active {
+  background: rgba(26, 86, 219, 0.08);
+}
+
+.avatar-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #1a56db, #2563eb);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.avatar-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.avatar-name {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.avatar-role {
+  font-size: 10.5px;
+  opacity: 0.4;
+  white-space: nowrap;
+}
+
+.avatar-chevron {
+  font-size: 10px;
+  opacity: 0.35;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.avatar-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown ────────────────────────────────── */
+.avatar-dropdown {
+  position: absolute;
+  top: calc(100% + 20px);
+  right: 0;
+  min-width: 300px;
+  border-radius: 14px;
+  padding: 8px;
+  z-index: 9999;
+  animation: dropIn 0.18s ease-out both;
+}
+
+.theme-dark .avatar-dropdown {
+  background: #121a2c;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(26, 86, 219, 0.08);
+}
+
+.theme-light .avatar-dropdown {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 12px;
+}
+
+.dropdown-avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1a56db, #2563eb);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(26, 86, 219, 0.35);
+  letter-spacing: 0.5px;
+}
+
+.dropdown-user-text {
+  min-width: 0;
+}
+
+.dropdown-user-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-user-email {
+  font-size: 11.5px;
+  opacity: 0.4;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  margin: 4px 6px;
+}
+
+.theme-dark .dropdown-divider {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.theme-light .dropdown-divider {
+  background: #f1f5f9;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.theme-dark .dropdown-item {
+  color: #94a3b8;
+}
+
+.theme-light .dropdown-item {
+  color: #64748b;
+}
+
+.dropdown-item:hover {
+  background: rgba(26, 86, 219, 0.08);
+  color: #1a56db;
+}
+
+.dropdown-item i {
+  font-size: 13px;
+  width: 16px;
+  text-align: center;
+}
+
+.dropdown-item.danger {
+  color: #ef4444 !important;
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(239, 68, 68, 0.07);
+}
+
+/* ══ RESPONSIVE ══════════════════════════════════
+   Desktop ≥ 1025px
+   - Hamburger hidden, logo hidden (sidebar has it)
+   - Search bar visible in header-left
+   - Mobile search icon hidden
+════════════════════════════════════════════════ */
+@media (min-width: 1025px) {
+  .app-header {
+    left: 260px;
+  }
+
+  .hamburger-btn {
+    display: none !important;
+  }
+
+  .header-logo-link {
+    display: none !important;
+  }
+
+  .mobile-search-btn {
+    display: none !important;
+  }
+
+  .header-search-desktop {
+    display: flex;
+  }
+}
+
+/* ══ Mobile ≤ 1024px ════════════════════════════
+   - Header spans full width
+   - Logo + hamburger shown in header-left
+   - Desktop search hidden
+   - Search icon button shown in header-right
+   - Avatar text hidden (just circle)
+════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .app-header {
+    left: 0;
+  }
+
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .header-logo-link {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-search-desktop {
+    display: none;
+  }
+
+  .mobile-search-btn {
+    display: flex;
+  }
+
+  .avatar-info,
+  .avatar-chevron {
+    display: none;
+  }
+
+  .avatar-btn {
+    padding: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0 12px;
+  }
+}
+
+/* ── Notification bell additions — append to existing Header.css ── */
+
+/* Bell active state (panel is open) */
+.notif-btn-active {
+  color: #1a56db !important;
+}
+.theme-dark .notif-btn-active  { background: rgba(26,86,219,0.12) !important; }
+.theme-light .notif-btn-active { background: rgba(26,86,219,0.08) !important; }
+
+/* Live badge — replaces the hardcoded "3" */
+.notif-badge-live {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 100px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+  border: 2px solid;
+  animation: badgePop 0.25s ease;
+}
+.theme-dark .notif-badge-live  { border-color: #0f172a; }
+.theme-light .notif-badge-live { border-color: #f8fafc; }
+
+@keyframes badgePop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.2); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+/* Notifications count in avatar dropdown */
+.dropdown-notif-count {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: rgba(239,68,68,0.12);
+  color: #ef4444;
+}
+
+/* NavBar notification badge (next to bell link in sidebar nav) */
+.nav-notif-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 100px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  line-height: 1;
+  animation: badgePop 0.25s ease;
+}

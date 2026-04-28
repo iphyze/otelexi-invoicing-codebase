@@ -1,0 +1,276 @@
+// pages/notifications/Notifications.jsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import NavBar from '../../components/NavBar';
+import Header from '../../components/Header';
+import PageNav from '../../components/PageNav';
+import useThemeStore from '../../stores/useThemeStore';
+import useNotificationStore from '../../stores/useNotificationStore';
+import './Notifications.css';
+
+const TYPE_META = {
+  'invoice.finalized':     { icon: 'fa-paper-plane',          color: '#1a56db', label: 'Invoice Finalized' },
+  'invoice.paid':          { icon: 'fa-circle-check',         color: '#10b981', label: 'Invoice Paid' },
+  'invoice.cancelled':     { icon: 'fa-ban',                  color: '#ef4444', label: 'Invoice Cancelled' },
+  'invoice.overdue_batch': { icon: 'fa-triangle-exclamation', color: '#f59e0b', label: 'Overdue Alert' },
+  'payment.received':      { icon: 'fa-money-bill-wave',      color: '#10b981', label: 'Payment Received' },
+  'stock.low':             { icon: 'fa-box',                  color: '#f59e0b', label: 'Low Stock' },
+  'quotation.accepted':    { icon: 'fa-file-pen',             color: '#8b5cf6', label: 'Quotation Accepted' },
+  'proforma.approved':     { icon: 'fa-file-circle-check',    color: '#8b5cf6', label: 'Proforma Approved' },
+};
+
+const getMeta = (type) => TYPE_META[type] || { icon: 'fa-bell', color: '#64748b', label: 'Notification' };
+
+const getRoute = (modelType, modelId) => {
+  if (!modelType || !modelId) return null;
+  const map = {
+    Invoice:         `/invoices/${modelId}`,
+    Payment:         `/invoices`,
+    Quotation:       `/quotations/${modelId}`,
+    ProformaInvoice: `/proformas/${modelId}`,
+    Product:         `/products/${modelId}`,
+  };
+  return map[modelType] || null;
+};
+
+const timeAgo = (dateStr) => {
+  if (!dateStr) return '';
+  const diff  = Date.now() - new Date(dateStr).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins < 1)   return 'Just now';
+  if (mins < 60)  return `${mins} minute${mins !== 1 ? 's' : ''} ago`;
+  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  if (days < 7)   return `${days} day${days !== 1 ? 's' : ''} ago`;
+  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+};
+
+// Group notifications by date
+const groupByDate = (notifications) => {
+  const groups = {};
+  notifications.forEach((n) => {
+    const date = new Date(n.created_at);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    let key;
+    if (date.toDateString() === today.toDateString())     key = 'Today';
+    else if (date.toDateString() === yesterday.toDateString()) key = 'Yesterday';
+    else key = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(n);
+  });
+  return groups;
+};
+
+const Notifications = () => {
+  const { theme }     = useThemeStore();
+  const navigate      = useNavigate();
+  const [nav, setNav] = useState(false);
+
+  const {
+    notifications, unreadCount, loading, meta, filter,
+    fetchNotifications, markRead, markAllRead, setFilter,
+  } = useNotificationStore();
+
+  const [page, setPage] = useState(1);
+  const [allNotifs, setAllNotifs] = useState([]);
+  const [fetching, setFetching]   = useState(false);
+
+  useEffect(() => {
+    document.title = 'Otelex | Notifications';
+    loadPage(1, filter);
+  }, []);
+
+  const loadPage = async (p, f = filter) => {
+    setFetching(true);
+    try {
+      await fetchNotifications({ filter: f, page: p, limit: 20 });
+    } finally { setFetching(false); }
+  };
+
+  // Sync allNotifs from store whenever notifications change
+  useEffect(() => {
+    if (page === 1) {
+      setAllNotifs(notifications);
+    } else {
+      // Merge avoiding duplicates
+      setAllNotifs((prev) => {
+        const ids = new Set(prev.map((n) => n.id));
+        return [...prev, ...notifications.filter((n) => !ids.has(n.id))];
+      });
+    }
+  }, [notifications]);
+
+  const handleFilterChange = (f) => {
+    setPage(1);
+    setAllNotifs([]);
+    setFilter(f);
+    loadPage(1, f);
+  };
+
+  const handleLoadMore = () => {
+    const next = page + 1;
+    setPage(next);
+    loadPage(next);
+  };
+
+  const handleItemClick = async (notif) => {
+    if (!notif.is_read) await markRead([notif.id]);
+    const route = getRoute(notif.model_type, notif.model_id);
+    if (route) navigate(route);
+  };
+
+  const groups = groupByDate(allNotifs);
+  const totalPages = meta?.total_pages || 1;
+
+  return (
+    <div className={`main-container theme-${theme}`}>
+      <Header setNav={setNav} nav={nav} />
+      <NavBar setNav={setNav} nav={nav} />
+
+      <div className="page-content">
+        <PageNav
+          pageTitle="Notifications"
+          links={[{ label: 'Dashboard', to: '/' }, { label: 'Notifications', active: true }]}
+        />
+
+        <div className="notif-layout">
+          {/* ── Sidebar ── */}
+          <div className={`notif-sidebar theme-${theme}`}>
+            <div className="notif-sidebar-section">
+              <p className="notif-sidebar-label">Filter</p>
+              {[
+                { key: 'all',    icon: 'fa-list',          label: 'All Notifications' },
+                { key: 'unread', icon: 'fa-circle',        label: 'Unread' },
+              ].map((f) => (
+                <button
+                  key={f.key} type="button"
+                  className={`notif-filter-btn ${filter === f.key ? 'is-active' : ''}`}
+                  onClick={() => handleFilterChange(f.key)}
+                >
+                  <i className={`fas ${f.icon}`} />
+                  <span>{f.label}</span>
+                  {f.key === 'unread' && unreadCount > 0 && (
+                    <span className="notif-filter-count">{unreadCount}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {unreadCount > 0 && (
+              <button className="notif-mark-all-btn" onClick={markAllRead} type="button">
+                <i className="fas fa-check-double" /> Mark all as read
+              </button>
+            )}
+          </div>
+
+          {/* ── Main list ── */}
+          <div className="notif-main">
+            {/* Loading skeleton on first load */}
+            {loading && allNotifs.length === 0 && (
+              <div className="notif-loading">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className={`notif-shimmer theme-${theme}`} />
+                ))}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!loading && allNotifs.length === 0 && (
+              <motion.div className={`notif-empty theme-${theme}`}
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="notif-empty-icon">
+                  <i className="fas fa-bell-slash" />
+                </div>
+                <h4>{filter === 'unread' ? 'All caught up!' : 'No notifications yet'}</h4>
+                <p>{filter === 'unread'
+                  ? 'You have no unread notifications.'
+                  : 'Notifications about invoices, payments, and stock will appear here.'
+                }</p>
+              </motion.div>
+            )}
+
+            {/* Grouped notification list */}
+            <AnimatePresence>
+              {Object.entries(groups).map(([dateLabel, items]) => (
+                <div key={dateLabel} className="notif-group">
+                  <div className="notif-date-label">
+                    <span>{dateLabel}</span>
+                  </div>
+
+                  {items.map((n, i) => {
+                    const meta    = getMeta(n.type);
+                    const hasLink = !!getRoute(n.model_type, n.model_id);
+                    return (
+                      <motion.div
+                        key={n.id}
+                        className={`notif-item ${!n.is_read ? 'notif-unread' : ''} ${hasLink ? 'notif-clickable' : ''} theme-${theme}`}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        onClick={() => hasLink && handleItemClick(n)}
+                      >
+                        {/* Unread bar */}
+                        {!n.is_read && <div className="notif-unread-bar" />}
+
+                        <div className="notif-icon-wrap" style={{ background: `${meta.color}18`, color: meta.color }}>
+                          <i className={`fas ${meta.icon}`} />
+                        </div>
+
+                        <div className="notif-item-body">
+                          <div className="notif-item-top">
+                            <span className="notif-item-title">{n.title}</span>
+                            <span className="notif-item-time">{timeAgo(n.created_at)}</span>
+                          </div>
+                          <p className="notif-item-msg">{n.message}</p>
+                          <div className="notif-item-meta">
+                            <span className="notif-type-badge" style={{ color: meta.color, background: `${meta.color}12` }}>
+                              {meta.label}
+                            </span>
+                            {!n.is_read && (
+                              <button
+                                className="notif-mark-single"
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); markRead([n.id]); }}
+                              >
+                                Mark read
+                              </button>
+                            )}
+                            {hasLink && (
+                              <span className="notif-view-link">
+                                View <i className="fas fa-arrow-right" />
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ))}
+            </AnimatePresence>
+
+            {/* Load more */}
+            {allNotifs.length > 0 && page < totalPages && (
+              <div className="notif-load-more">
+                <button className="notif-load-btn" onClick={handleLoadMore} disabled={fetching} type="button">
+                  {fetching ? <><span className="notif-spinner" /> Loading...</> : 'Load more notifications'}
+                </button>
+              </div>
+            )}
+
+            {/* End of list */}
+            {allNotifs.length > 0 && page >= totalPages && (
+              <p className="notif-end-msg">You've seen all notifications.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Notifications;

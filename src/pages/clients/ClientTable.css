@@ -1,0 +1,815 @@
+/* =============================================
+   CLIENT TABLE — OTELEX
+   ============================================= */
+
+.ct-wrapper {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ct-wrapper.theme-dark {
+  background: #1a2540;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ct-wrapper.theme-light {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Toolbar ──────────────────────────────────── */
+.ct-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid;
+}
+
+.theme-dark .ct-toolbar {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.theme-light .ct-toolbar {
+  border-color: #f1f5f9;
+}
+
+.ct-toolbar-left,
+.ct-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Search ───────────────────────────────────── */
+.ct-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ct-search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 12px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.ct-search {
+  padding: 12px 72px 12px 34px;
+  /* room for clear + go buttons */
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid;
+  outline: none;
+  min-width: 240px;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.ct-search.theme-dark {
+  background: rgba(21, 71, 208, 0.04);
+  border-color: rgba(19, 81, 195, 0.323);
+  color: #dde2ff;
+}
+
+.ct-search.theme-light {
+  background: #fbfcff;
+  border-color: #c3c4c6;
+  color: #171f2e;
+}
+
+.ct-search:focus {
+  border-color: #1a56db;
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+}
+
+.theme-dark.ct-search::placeholder {
+  opacity: 0.8;
+}
+.theme-light.ct-search::placeholder {
+  opacity: 0.5;
+}
+
+/* Clear button inside search */
+.ct-search-clear {
+  position: absolute;
+  right: 36px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 4px;
+  border-radius: 50%;
+  opacity: 0.45;
+  color: inherit;
+  transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ct-search-clear:hover {
+  opacity: 1;
+}
+
+/* Go / search button */
+.ct-search-go {
+  position: absolute;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: none;
+  background: #1a56db;
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.ct-search-go:hover {
+  background: #1648c0;
+  transform: scale(1.05);
+}
+
+.ct-filter-select {
+  min-width: 130px;
+}
+
+/* New client button */
+.ct-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #1a56db, #1e3a8a);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(26, 86, 219, 0.28);
+  transition: transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.ct-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(26, 86, 219, 0.36);
+}
+
+/* ── Bulk action bar ──────────────────────────── */
+.ct-bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid;
+  animation: ctSlideDown 0.18s ease;
+}
+
+.ct-bulk-bar.theme-dark {
+  background: rgba(26, 86, 219, 0.08);
+  border-color: rgba(26, 86, 219, 0.2);
+}
+
+.ct-bulk-bar.theme-light {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+@keyframes ctSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ct-bulk-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a56db;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ct-bulk-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ct-bulk-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ct-bulk-btn.danger {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.07);
+}
+
+.ct-bulk-btn.warning {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.07);
+}
+
+.ct-bulk-btn.success {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.07);
+}
+
+.ct-bulk-btn.neutral {
+  color: #64748b;
+  border-color: rgba(100, 116, 139, 0.3);
+  background: transparent;
+}
+
+.ct-bulk-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* ── Table ────────────────────────────────────── */
+.ct-table-wrap {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.ct-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.ct-th {
+  padding: 13px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid;
+}
+
+.theme-dark .ct-th {
+  color: #64748b;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.theme-light .ct-th {
+  color: #94a3b8;
+  border-color: #f1f5f9;
+}
+
+.ct-th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.ct-th.sortable:hover {
+  color: #1a56db;
+}
+
+.ct-th-check {
+  width: 48px;
+}
+
+.ct-th-actions {
+  text-align: center;
+}
+
+.ct-sort-icon {
+  margin-left: 5px;
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+/* ── Row ─────────────────────────────────────── */
+.ct-row {
+  transition: background 0.14s;
+  border-bottom: 1px solid;
+}
+
+.theme-dark .ct-row {
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.theme-light .ct-row {
+  border-color: #f8faff;
+}
+
+.ct-row:last-child {
+  border-bottom: none;
+}
+
+.theme-dark .ct-row:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.theme-light .ct-row:hover {
+  background: #f8faff;
+}
+
+.theme-dark .ct-row.is-selected {
+  background: rgba(26, 86, 219, 0.08);
+}
+
+.theme-light .ct-row.is-selected {
+  background: #eef2ff;
+}
+
+/* More top/bottom padding in cells */
+.ct-row td {
+  padding: 16px 16px;
+  vertical-align: middle;
+}
+
+/* ── Custom checkbox ─────────────────────────── */
+.ct-check-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  width: 18px;
+  height: 18px;
+}
+
+.ct-check-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.ct-check-box {
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  border: 1.5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.16s, border-color 0.16s;
+  flex-shrink: 0;
+}
+
+/* Dark mode — muted visible, not glaring white */
+.theme-dark .ct-check-box {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.theme-light .ct-check-box {
+  border-color: #d1d5db;
+  background: #f8faff;
+}
+
+/* Checked state */
+.ct-check-input:checked+.ct-check-box {
+  background: #1a56db;
+  border-color: #1a56db;
+}
+
+.ct-check-input:checked+.ct-check-box::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(42deg) translateY(-1px);
+}
+
+.ct-check-label:hover .ct-check-box {
+  border-color: #1a56db;
+}
+
+/* ── Company cell ────────────────────────────── */
+.ct-company {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.ct-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1a56db, #2563eb);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.ct-company-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.ct-company-sub {
+  font-size: 11px;
+  margin: 2px 0 0;
+  opacity: 0.4;
+}
+
+/* ── Contact cell ────────────────────────────── */
+.ct-contact-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ct-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  text-decoration: none;
+  color: inherit;
+  opacity: 0.65;
+  transition: opacity 0.15s;
+}
+
+.ct-contact-row:hover {
+  opacity: 1;
+  color: #1a56db;
+}
+
+.ct-contact-row i {
+  font-size: 11px;
+  width: 12px;
+}
+
+/* ── Location ────────────────────────────────── */
+.ct-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.ct-location i {
+  font-size: 11px;
+  color: #1a56db;
+}
+
+/* ── Currency badge ──────────────────────────── */
+.ct-currency-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.theme-dark .ct-currency-badge {
+  background: rgba(255, 255, 255, 0.07);
+  color: #94a3b8;
+}
+
+.theme-light .ct-currency-badge {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* ── Terms ───────────────────────────────────── */
+.ct-terms {
+  font-size: 12.5px;
+  opacity: 0.65;
+}
+
+/* ── Status badge ────────────────────────────── */
+.ct-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-active {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.badge-inactive {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* ── Row actions ─────────────────────────────── */
+.ct-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.ct-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  opacity: 0.45;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.ct-action-btn:hover {
+  opacity: 1;
+}
+
+.ct-action-btn.view:hover {
+  background: rgba(26, 86, 219, 0.1);
+  color: #1a56db;
+}
+
+.ct-action-btn.edit:hover {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.ct-action-btn.contact:hover {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.ct-action-btn.deactivate:hover {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.ct-action-btn.reactivate:hover {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.ct-action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.ct-action-btn:disabled {
+  opacity: 0.15;
+  cursor: not-allowed;
+}
+
+/* ── Skeleton ────────────────────────────────── */
+.ct-skel-row td {
+  padding: 16px;
+}
+
+.ct-skel-cell {
+  height: 16px;
+  border-radius: 6px;
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: ctShimmer 1.4s infinite;
+}
+
+.theme-light .ct-skel-cell {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes ctShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ── Empty state ─────────────────────────────── */
+.ct-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 32px;
+  gap: 12px;
+  text-align: center;
+}
+
+.ct-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(26, 86, 219, 0.1);
+  color: #1a56db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
+.ct-empty-icon.error-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.ct-empty h4 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.ct-empty p {
+  font-size: 13.5px;
+  margin: 0;
+  opacity: 0.5;
+  max-width: 360px;
+  line-height: 1.6;
+}
+
+.ct-empty-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.ct-empty-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ct-empty-btn.primary {
+  background: linear-gradient(135deg, #1a56db, #1e3a8a);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(26, 86, 219, 0.3);
+}
+
+.ct-empty-btn.primary:hover {
+  transform: translateY(-1px);
+}
+
+/* ── Pagination ──────────────────────────────── */
+.ct-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid;
+}
+
+.theme-dark .ct-pagination {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.theme-light .ct-pagination {
+  border-color: #f1f5f9;
+}
+
+.ct-pag-info {
+  font-size: 12.5px;
+  opacity: 0.45;
+}
+
+.ct-pag-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ct-pag-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 9px;
+  border: 1px solid;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-dark .ct-pag-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.theme-light .ct-pag-btn {
+  background: #f8faff;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+.ct-pag-btn:hover:not(:disabled):not(.is-active) {
+  border-color: #1a56db;
+  color: #1a56db;
+  background: rgba(26, 86, 219, 0.06);
+}
+
+.ct-pag-btn.is-active {
+  background: #1a56db;
+  border-color: #1a56db;
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(26, 86, 219, 0.3);
+}
+
+.ct-pag-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Export Excel button */
+.ct-btn-download {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.07);
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.ct-btn-download:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.ct-btn-download:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

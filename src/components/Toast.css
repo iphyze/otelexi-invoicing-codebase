@@ -1,0 +1,201 @@
+/* =============================================
+   TOAST — OTELEX
+   Progress bar driven by CSS transition (not RAF loop)
+   ============================================= */
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 360px;
+  width: calc(100vw - 48px);
+}
+
+/* ── Toast item ──────────────────────────────── */
+.toast-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 14px 18px 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  pointer-events: all;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  background: rgba(22, 32, 50, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #e2e8f0;
+
+  /* Enter / exit */
+  opacity: 0;
+  transform: translateX(24px) scale(0.97);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast-item.toast-in {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.toast-item.toast-out {
+  opacity: 0;
+  transform: translateX(28px) scale(0.96);
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+/* Light mode override via data-theme on html */
+[data-theme="light"] .toast-item {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid #e9edf5;
+  color: #1e293b;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Left accent bar ─────────────────────────── */
+.toast-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 14px 0 0 14px;
+}
+
+.toast-success .toast-accent {
+  background: linear-gradient(180deg, #10b981, #059669);
+}
+
+.toast-error .toast-accent {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+}
+
+.toast-info .toast-accent {
+  background: linear-gradient(180deg, #1a56db, #1e3a8a);
+}
+
+.toast-warning .toast-accent {
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+}
+
+/* ── Icon ────────────────────────────────────── */
+.toast-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+.toast-success .toast-icon-wrap {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.toast-error .toast-icon-wrap {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.toast-info .toast-icon-wrap {
+  background: rgba(26, 86, 219, 0.15);
+  color: #1a56db;
+}
+
+.toast-warning .toast-icon-wrap {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+/* ── Content ─────────────────────────────────── */
+.toast-content {
+  flex: 1;
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.toast-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin: 0 0 3px;
+  opacity: 0.5;
+}
+
+.toast-message {
+  font-size: 13.5px;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* ── Close ───────────────────────────────────── */
+.toast-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px;
+  border-radius: 6px;
+  opacity: 0.35;
+  color: inherit;
+  transition: opacity 0.15s;
+}
+
+.toast-close-btn:hover {
+  opacity: 0.9;
+}
+
+/* ── Progress bar (CSS transition driven) ────── */
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.toast-progress-bar {
+  height: 100%;
+  /* width is set inline — starts 100%, transitions to 0% */
+}
+
+.toast-success .toast-progress-bar {
+  background: #10b981;
+}
+
+.toast-error .toast-progress-bar {
+  background: #ef4444;
+}
+
+.toast-info .toast-progress-bar {
+  background: #1a56db;
+}
+
+.toast-warning .toast-progress-bar {
+  background: #f59e0b;
+}
+
+/* ── Mobile ──────────────────────────────────── */
+@media (max-width: 480px) {
+  .toast-container {
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+}

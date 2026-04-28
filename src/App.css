@@ -1,0 +1,94 @@
+@font-face{
+  font-family: Montserrat-Bold;
+  src: url(./assets/fonts/Montserrat/Montserrat-Bold.ttf);
+}
+@font-face{
+  font-family: Montserrat-Regular;
+  src: url(./assets/fonts/Montserrat/Montserrat-Regular.ttf);
+}
+@font-face{
+  font-family: Montserrat-SemiBold;
+  src: url(./assets/fonts/Montserrat/Montserrat-SemiBold.ttf);
+}
+@font-face{
+  font-family: Montserrat-Medium;
+  src: url(./assets/fonts/Montserrat/Montserrat-Medium.ttf);
+}
+@font-face{
+  font-family: Montserrat-Light;
+  src: url(./assets/fonts/Montserrat/Montserrat-Light.ttf);
+}
+@font-face{
+  font-family: Montserrat-ExtraBold;
+  src: url(./assets/fonts/Montserrat/Montserrat-ExtraBold.ttf);
+}
+@font-face{
+  font-family: Montserrat-Italic;
+  src: url(./assets/fonts/Montserrat/Montserrat-Italic.ttf);
+}
+
+/* =============================================
+   GLOBAL THEME TOKENS — OTELEX
+   Include this in your index.css or App.css
+   ============================================= */
+
+/* ── Otelex brand palette ────────────────────── */
+:root {
+  /* Core blues — extracted from the Otelex shield logo */
+  --accent:           #1a56db;          /* royal blue  */
+  --accent-dark:      #1e3a8a;          /* deep navy   */
+  --accent-hover:     #1648c0;          /* pressed     */
+  --accent-light:     rgba(26, 86, 219, 0.10);
+  --accent-lighter:   rgba(26, 86, 219, 0.05);
+  --accent-glow:      rgba(26, 86, 219, 0.25);
+
+  /* Neutrals */
+  --nav-width:        260px;
+  --header-height:    64px;
+
+  /* Semantic */
+  --success:  #10b981;
+  --warning:  #f59e0b;
+  --danger:   #ef4444;
+  --info:     #1a56db;
+}
+
+/* ── Dark mode surface palette ───────────────── */
+[data-theme="dark"],
+.theme-dark {
+  --bg-base:      #0f172a;   /* deepest — navbar & header */
+  --bg-surface:   #1e293b;   /* cards, dropdowns          */
+  --bg-elevated:  #273449;   /* modals, popovers          */
+  --border:       rgba(255, 255, 255, 0.06);
+  --text-primary:  #f1f5f9;
+  --text-muted:    #94a3b8;
+  --text-faint:    #64748b;
+}
+
+/* ── Light mode surface palette ──────────────── */
+[data-theme="light"],
+.theme-light {
+  --bg-base:      #f0f4ff;   /* page background           */
+  --bg-surface:   #ffffff;   /* cards, header, navbar     */
+  --bg-elevated:  #f8faff;   /* inputs, table rows        */
+  --border:       #e2e8f0;
+  --text-primary:  #1e293b;
+  --text-muted:    #64748b;
+  --text-faint:    #94a3b8;
+}
+
+/* ── Base resets ─────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', 'Nunito', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Apply theme to body via data-theme attribute (set by useThemeStore) */
+[data-theme="dark"]  body,
+body.theme-dark  { background: #0f172a; color: #f1f5f9; }
+[data-theme="light"] body,
+body.theme-light { background: #f0f4ff; color: #1e293b; }

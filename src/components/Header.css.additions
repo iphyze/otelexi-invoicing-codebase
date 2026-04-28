@@ -1,0 +1,66 @@
+/* ── Notification bell additions — append to existing Header.css ── */
+
+/* Bell active state (panel is open) */
+.notif-btn-active {
+  color: #1a56db !important;
+}
+.theme-dark .notif-btn-active  { background: rgba(26,86,219,0.12) !important; }
+.theme-light .notif-btn-active { background: rgba(26,86,219,0.08) !important; }
+
+/* Live badge — replaces the hardcoded "3" */
+.notif-badge-live {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 100px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+  border: 2px solid;
+  animation: badgePop 0.25s ease;
+}
+.theme-dark .notif-badge-live  { border-color: #0f172a; }
+.theme-light .notif-badge-live { border-color: #f8fafc; }
+
+@keyframes badgePop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.2); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+/* Notifications count in avatar dropdown */
+.dropdown-notif-count {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: rgba(239,68,68,0.12);
+  color: #ef4444;
+}
+
+/* NavBar notification badge (next to bell link in sidebar nav) */
+.nav-notif-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 100px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  line-height: 1;
+  animation: badgePop 0.25s ease;
+}

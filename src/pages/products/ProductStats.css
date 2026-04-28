@@ -1,0 +1,111 @@
+/* pages/products/ProductStats.css */
+
+.ps-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1200px) { .ps-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px)  { .ps-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px)  { .ps-grid { grid-template-columns: 1fr; } }
+
+.ps-card {
+  border-radius: 14px;
+  padding: 20px 20px 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  min-height: 90px;
+}
+
+.theme-dark .ps-card {
+  background: #1a2540;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.theme-light .ps-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Coloured left bar */
+.ps-accent-bar {
+  position: absolute;
+  left: 0;
+  top: 16px;
+  bottom: 16px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Icon block */
+.ps-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+/* Text */
+.ps-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ps-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px;
+  opacity: 0.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ps-value {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+/* Skeleton shimmer for loading */
+.ps-skel {
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: psShimmer 1.4s infinite;
+}
+
+.theme-light .ps-skel {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes psShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Background depth blob */
+.ps-blob {
+  position: absolute;
+  top: 0; right: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}

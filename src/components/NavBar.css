@@ -1,0 +1,340 @@
+/* =============================================
+   NAVBAR — OTELEX
+   Themed to match the Otelex navy/royal blue logo
+   ============================================= */
+
+/* ── Design tokens ───────────────────────────── */
+:root {
+  --nav-width: 260px;
+  --nav-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Otelex blue palette — extracted from logo */
+  --accent:          #1a56db;          /* royal blue — primary action  */
+  --accent-mid:      #1e3a8a;          /* navy — darker shade           */
+  --accent-light:    rgba(26, 86, 219, 0.10);   /* hover/active bg      */
+  --accent-lighter:  rgba(26, 86, 219, 0.06);   /* subtle bg            */
+  --accent-glow:     rgba(26, 86, 219, 0.22);   /* shadow glow          */
+}
+
+/* ── Base ────────────────────────────────────── */
+.navbar {
+  width: var(--nav-width);
+  min-height: 100vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 900;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: transform var(--nav-transition), background var(--nav-transition);
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-light) transparent;
+}
+.navbar::-webkit-scrollbar { width: 4px; }
+.navbar::-webkit-scrollbar-thumb {
+  background: var(--accent-light);
+  border-radius: 4px;
+}
+
+/* ── Themes ──────────────────────────────────── */
+.navbar.theme-dark {
+  background: #0e1526;           /* deep navy — complements logo shield */
+  border-right: 1px solid rgba(255, 255, 255, 0.053);
+  box-shadow: 4px 0 24px rgba(37, 37, 37, 0.05);
+}
+.navbar.theme-light {
+  background: #0f172a;           /* deep navy — complements logo shield */
+  border-right: 1px solid rgba(255, 255, 255, 0.02);
+  box-shadow: 4px 0 24px rgba(37, 37, 37, 0.05);
+}
+/* .navbar.theme-light {
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.05);
+} */
+
+/* ── Brand / Logo area ───────────────────────── */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Enough vertical padding so logo is well-framed */
+  padding: 18px 16px 14px;
+  flex-shrink: 0;
+  /* Intentionally NO bottom border/divider here — header aligns to this height */
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Logo image — scales to fit, preserves aspect ratio */
+.brand-logo-img {
+  /* height: 36px; */
+  width: auto;
+  max-width: 130px;
+  object-fit: contain;
+  object-position: left center;
+  display: block;
+  /* Slight fade-in so it doesn't flash on theme toggle */
+  transition: opacity 0.2s ease;
+}
+
+/* ── Mobile close button ─────────────────────── */
+.nav-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+.navbar.theme-dark .nav-close-btn { color: #94a3b8; }
+.navbar.theme-light .nav-close-btn { color: #64748b; }
+.nav-close-btn:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* ── Section label ───────────────────────────── */
+/* No divider line above — removed to keep alignment with the header clean */
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  padding: 20px 20px;
+  display: block;
+  opacity: 0.3;
+}
+.navbar.theme-dark .nav-section-label { color: #cbd5e1; }
+.navbar.theme-light .nav-section-label { color: #cbd5e1; }
+/* .navbar.theme-light .nav-section-label { color: #475569; } */
+
+/* ── Nav list ────────────────────────────────── */
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 10px;
+  flex: 1;
+}
+
+/* ── Nav link base ───────────────────────────── */
+.nav-link,
+.nav-parent {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  transition: background 0.18s, color 0.18s;
+  position: relative;
+  margin-bottom: 15px;
+}
+
+/* Default colours */
+.navbar.theme-dark .nav-link,
+.navbar.theme-dark .nav-parent  { color: #94a3b8; }
+.navbar.theme-light .nav-link,
+.navbar.theme-light .nav-parent  { color: #94a3b8; }
+/* .navbar.theme-light .nav-link,
+.navbar.theme-light .nav-parent { color: #64748b; } */
+
+/* Hover */
+.nav-link:hover,
+.nav-parent:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Active / selected */
+.nav-link.active,
+.nav-parent.child-active {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Left indicator bar on active item */
+.nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 22px;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Icon */
+.nav-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Label text */
+.nav-link span,
+.nav-parent span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Chevron ─────────────────────────────────── */
+.nav-chevron {
+  font-size: 10px;
+  opacity: 0.45;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+/* ── Submenu ─────────────────────────────────── */
+.submenu {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.32s ease, opacity 0.28s ease;
+}
+.submenu.submenu-visible {
+  max-height: 600px;
+  opacity: 1;
+}
+
+.submenu-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 38px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+  margin-bottom: 1px;
+}
+.navbar.theme-dark .submenu-link  { color: #64748b; }
+.navbar.theme-light .submenu-link  { color: #64748b; }
+/* .navbar.theme-light .submenu-link { color: #94a3b8; } */
+.submenu-link:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.submenu-link.active {
+  color: var(--accent);
+  font-weight: 700;
+}
+.submenu-link.active::before {
+  content: '';
+  position: absolute;
+  left: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px; height: 5px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.submenu-icon {
+  font-size: 11px;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+
+/* ── Divider (only used above logout) ───────── */
+.nav-divider {
+  height: 1px;
+  margin: 6px 14px;
+}
+.navbar.theme-dark .nav-divider  { background: rgba(255,255,255,0.06); }
+.navbar.theme-light .nav-divider  { background: rgba(255,255,255,0.06); }
+/* .navbar.theme-light .nav-divider { background: #e2e8f0; } */
+
+/* ── Bottom logout ───────────────────────────── */
+.nav-bottom {
+  padding: 0 10px 18px;
+  flex-shrink: 0;
+}
+.nav-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #ef4444;
+  opacity: 0.65;
+  transition: background 0.18s, opacity 0.18s;
+}
+.nav-logout:hover {
+  background: rgba(239, 68, 68, 0.08);
+  opacity: 1;
+}
+
+/* ── Mobile overlay ──────────────────────────── */
+.nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 890;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(3px);
+  pointer-events: none;
+}
+.nav-overlay.overlay-visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Mobile breakpoint ───────────────────────── */
+@media (max-width: 1024px) {
+  .navbar {
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+  .navbar.nav-open {
+    transform: translateX(0);
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
+  }
+  .nav-overlay { display: block; }
+  .nav-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
