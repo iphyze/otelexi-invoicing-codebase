@@ -13,33 +13,8 @@ import ConfirmModal from '../../components/modals/ConfirmModal';
 import RejectProformaModal from './RejectProformaModal';
 import './SingleProforma.css';
 import PDFDownloadButton from '../../components/pdf/PDFDownloadButton';
-
-const STATUS_META = {
-  draft:     { label: 'Draft',     cls: 'sp-st-draft',     icon: 'fa-pen' },
-  sent:      { label: 'Sent',      cls: 'sp-st-sent',      icon: 'fa-paper-plane' },
-  approved:  { label: 'Approved',  cls: 'sp-st-approved',  icon: 'fa-circle-check' },
-  rejected:  { label: 'Rejected',  cls: 'sp-st-rejected',  icon: 'fa-circle-xmark' },
-  expired:   { label: 'Expired',   cls: 'sp-st-expired',   icon: 'fa-clock' },
-  converted: { label: 'Converted', cls: 'sp-st-converted', icon: 'fa-arrows-turn-to-dots' },
-};
-
-const fmt = (n, cur = 'NGN') => {
-  const sym = cur === 'USD' ? '$' : '₦';
-  return sym + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
-};
-
-// ── Skeleton ──────────────────────────────────────────────────────
-const Skeleton = ({ theme }) => (
-  <div className={`sp-skeleton theme-${theme}`}>
-    <div className="sp-skel-hero">
-      <div className="sp-skel-block" style={{ width: '30%', height: 28 }} />
-      <div className="sp-skel-block" style={{ width: '20%', height: 18 }} />
-    </div>
-    {[...Array(5)].map((_, i) => (
-      <div key={i} className="sp-skel-block" style={{ width: `${60 + i * 8}%`, height: 14, marginTop: 10 }} />
-    ))}
-  </div>
-);
+import { formatCurrencyDecimals, STATUS_META } from '../../utils/helper';
+import Skeleton from '../../components/Sekeleton';
 
 const SingleProforma = () => {
   const { id } = useParams();
@@ -180,6 +155,12 @@ const SingleProforma = () => {
                 </div>
 
                 <div className="sp-hero-actions">
+
+                  {/* ── PDF Download — always visible when proforma is loaded ── */}
+                  {/* <PDFDownloadButton type="proforma" doc={p} label="Download PDF"/> */}
+                
+                <button className='pdf-dl-btn' type="button" onClick={() => navigate(`/proformas/${id}/preview`)}><i className="fas fa-file-pdf"/> Preview</button>
+
                   {p.status === 'draft' && isMine && (
                     <>
                       <button className="sp-act-btn primary" onClick={() => navigate(`/proformas/${id}/edit`)} type="button">
@@ -208,12 +189,7 @@ const SingleProforma = () => {
                       <i className="fas fa-file-invoice" /> Convert to Invoice
                     </button>
                   )}
-                  {/* ── PDF Download — always visible when proforma is loaded ── */}
-                  <PDFDownloadButton
-                    type="proforma"
-                    doc={p}
-                    label="Download PDF"
-                  />
+                  
                 </div>
               </motion.div>
 
@@ -255,17 +231,17 @@ const SingleProforma = () => {
                 >
                   <h3 className="sp-card-title"><i className="fas fa-receipt" /> Financial Summary</h3>
                   <div className="sp-totals">
-                    <div className="sp-total-row"><span>Subtotal</span><span>{fmt(p.subtotal, p.currency)}</span></div>
+                    <div className="sp-total-row"><span>Subtotal</span><span>{formatCurrencyDecimals(p.subtotal, p.currency)}</span></div>
                     {p.discount_amount > 0 && (
                       <div className="sp-total-row sp-disc-row">
                         <span>Discount{p.discount_type === 'percentage' ? ` (${p.discount_value}%)` : ''}</span>
-                        <span>-{fmt(p.discount_amount, p.currency)}</span>
+                        <span>-{formatCurrencyDecimals(p.discount_amount, p.currency)}</span>
                       </div>
                     )}
-                    <div className="sp-total-row"><span>Taxable Amount</span><span>{fmt(p.taxable_amount, p.currency)}</span></div>
-                    <div className="sp-total-row"><span>VAT</span><span>{fmt(p.tax_amount, p.currency)}</span></div>
+                    <div className="sp-total-row"><span>Taxable Amount</span><span>{formatCurrencyDecimals(p.taxable_amount, p.currency)}</span></div>
+                    <div className="sp-total-row"><span>VAT</span><span>{formatCurrencyDecimals(p.tax_amount, p.currency)}</span></div>
                     <div className="sp-total-divider" />
-                    <div className="sp-total-row sp-total-grand"><span>Total</span><span>{fmt(p.total_amount, p.currency)}</span></div>
+                    <div className="sp-total-row sp-total-grand"><span>Total</span><span>{formatCurrencyDecimals(p.total_amount, p.currency)}</span></div>
                     {p.currency === 'USD' && (
                       <p className="sp-exchange-note"><i className="fas fa-circle-info" /> Exchange rate: 1 USD = ₦{p.exchange_rate?.toLocaleString()}</p>
                     )}
@@ -322,11 +298,11 @@ const SingleProforma = () => {
                             {item.product_sku && <p className="sp-item-sku">SKU: {item.product_sku}</p>}
                           </td>
                           <td className="sp-num-col">{item.quantity}</td>
-                          <td className="sp-num-col">{fmt(item.unit_price, p.currency)}</td>
-                          <td className="sp-num-col">{item.discount_amount > 0 ? `-${fmt(item.discount_amount, p.currency)}` : '—'}</td>
+                          <td className="sp-num-col">{formatCurrencyDecimals(item.unit_price, p.currency)}</td>
+                          <td className="sp-num-col">{item.discount_amount > 0 ? `-${formatCurrencyDecimals(item.discount_amount, p.currency)}` : '—'}</td>
                           <td className="sp-num-col">{item.tax_rate}%</td>
-                          <td className="sp-num-col">{fmt(item.tax_amount, p.currency)}</td>
-                          <td className="sp-num-col sp-line-total">{fmt(item.line_total, p.currency)}</td>
+                          <td className="sp-num-col">{formatCurrencyDecimals(item.tax_amount, p.currency)}</td>
+                          <td className="sp-num-col sp-line-total">{formatCurrencyDecimals(item.line_total, p.currency)}</td>
                         </tr>
                       ))}
                     </tbody>

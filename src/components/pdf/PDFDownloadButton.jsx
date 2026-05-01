@@ -12,6 +12,7 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import useSettingsStore from '../../stores/useSettingsStore';
 import InvoicePDF from './InvoicePDF';
 import QuotationPDF from './QuotationPDF';
+import ProformaPDF from './ProformaPDF';
 import './PDFDownloadButton.css';
 
 // Map type → PDF document component + file name generator
@@ -29,7 +30,7 @@ const makeDoc = (type, doc, settings) => {
       };
     case 'proforma':
       return {
-        component: <QuotationPDF quotation={doc} settings={settings} docType="proforma" />,
+        component: <ProformaPDF quotation={doc} settings={settings} docType="proforma" />,
         filename: `Otelex_Proforma_${doc?.proforma_number || 'PRO'}.pdf`,
       };
     default:

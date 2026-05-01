@@ -228,7 +228,8 @@ const DatePicker = ({
         )}
         {view === 'years' && (
           <>
-            <button className="dp-nav" onClick={() => setCursor((c) => ({ ...c }))} type="button"
+            <button className="dp-nav" 
+            // onClick={() => setCursor((c) => ({ ...c }))} type="button"
               onClick={() => { const s = yearStart - 12; setCursor((c) => ({ ...c, year: s + 6 })); }} ><i className="fas fa-chevron-left" /></button>
             <span className="dp-header-title">{yearStart}–{yearStart + 11}</span>
             <button className="dp-nav" type="button"

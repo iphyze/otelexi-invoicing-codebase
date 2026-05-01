@@ -1,4 +1,4 @@
-// components/pdf/QuotationPDF.jsx
+// components/pdf/ProformaPDF.jsx
 import React from 'react';
 import {
   Document, Page, View, Text, Image, StyleSheet, Font,
@@ -35,7 +35,7 @@ const WHITE = '#FFFFFF';
 const BORDER_GRAY = '#d8dbe0';
 
 // ── Main Component ───────────────────────────────────────────────────
-const QuotationPDF = ({ quotation: doc, settings, docType = 'quotation' }) => {
+const ProformaPDF = ({ quotation: doc, settings, docType = 'proforma' }) => {
   if (!doc) return null;
   const items = doc.items || [];
 
@@ -61,12 +61,12 @@ const QuotationPDF = ({ quotation: doc, settings, docType = 'quotation' }) => {
 
   // Determine Logic based on Document Type
   const isProforma = docType === 'proforma';
-  const docTitle = isProforma ? 'PROFORMA INVOICE #' : 'QUOTATION #';
-  const docNumber = isProforma ? doc.proforma_number : doc.quotation_number;
+  const docTitle = 'PROFORMA INVOICE #';
+  const docNumber = doc.proforma_number;
 
   // Handle Expiry Date (Quotation) vs Due Date (Proforma)
-  const dateLabel = isProforma ? 'Due Date:' : 'Expiry Date:';
-  const dateValue = isProforma ? doc.due_date : doc.expiry_date;
+  const dateLabel = 'Due Date:';
+  const dateValue = doc.due_date || doc.expiry_date;
 
   const currentStatus = PDF_STATUS_META[doc.status] || PDF_STATUS_META.draft;
   const statusStyle = S[currentStatus.style];
@@ -265,7 +265,7 @@ const QuotationPDF = ({ quotation: doc, settings, docType = 'quotation' }) => {
   );
 };
 
-export default QuotationPDF;
+export default ProformaPDF;
 
 // ── Styles (Matching InvoicePDF) ────────────────────────────────────
 const S = StyleSheet.create({

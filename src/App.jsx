@@ -36,6 +36,9 @@ import VatReport from "./pages/reports/VatReport";
 import StaffPerformance from "./pages/reports/StaffPerformance";
 import Outstanding from "./pages/reports/Outstanding";
 import Notifications from "./pages/notifications/Notifications";
+import PreviewInvoice from "./pages/invoices/PreviewInvoice";
+import PreviewQuotation from "./pages/quotations/PreviewQuotation";
+import PreviewProforma from "./pages/proformas/PreviewProforma";
 
 const App = () => {
 
@@ -48,50 +51,53 @@ const App = () => {
 
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
 
-
+        {/* Dashboard is already protected, that's good */}
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
-        {/* Client Routes */}
+        {/* Client Routes - Protected */}
         <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
         <Route path="/clients/:id" element={<ProtectedRoute><SingleClient /></ProtectedRoute>} />
 
-        {/* Products Routes */}
+        {/* Products Routes - Protected */}
         <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
         <Route path="/products/:id" element={<ProtectedRoute><SingleProduct /></ProtectedRoute>} />
         <Route path="/products/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
 
+        {/* Quotations Routes - NEEDS PROTECTION */}
+        <Route path="/quotations" element={<ProtectedRoute><Quotations/></ProtectedRoute>} />
+        <Route path="/quotations/new" element={<ProtectedRoute><CreateQuotation /></ProtectedRoute>} />
+        <Route path="/quotations/:id" element={<ProtectedRoute><SingleQuotation /></ProtectedRoute>} />
+        <Route path="/quotations/:id/edit" element={<ProtectedRoute><EditQuotation /></ProtectedRoute>} />
+        <Route path="/quotations/:id/preview" element={<ProtectedRoute><PreviewQuotation /></ProtectedRoute>} />
 
-        {/* Quotations Routes */}
-        <Route path="/quotations" element={<Quotations/>} />
-        <Route path="/quotations/new" element={<CreateQuotation />} />
-        <Route path="/quotations/:id" element={<SingleQuotation />} />
-        <Route path="/quotations/:id/edit" element={<EditQuotation />} />
+        {/* Proformas Routes - NEEDS PROTECTION */}
+        <Route path="/proformas"          element={<ProtectedRoute><Proformas /></ProtectedRoute>} />
+        <Route path="/proformas/new"      element={<ProtectedRoute><CreateProforma /></ProtectedRoute>} />
+        <Route path="/proformas/:id"      element={<ProtectedRoute><SingleProforma /></ProtectedRoute>} />
+        <Route path="/proformas/:id/edit" element={<ProtectedRoute><EditProforma /></ProtectedRoute>} />
+        <Route path="/proformas/:id/preview" element={<ProtectedRoute><PreviewProforma /></ProtectedRoute>} />
 
-        {/* Proformas Routes */}
-        <Route path="/proformas"          element={<Proformas />} />
-        <Route path="/proformas/new"      element={<CreateProforma />} />
-        <Route path="/proformas/:id"      element={<SingleProforma />} />
-        <Route path="/proformas/:id/edit" element={<EditProforma />} />
+        {/* Invoices - NEEDS PROTECTION */}
+        <Route path="/invoices"            element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+        <Route path="/invoices/new"        element={<ProtectedRoute><CreateInvoice /></ProtectedRoute>} />
+        <Route path="/invoices/payments"   element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+        <Route path="/invoices/:id"        element={<ProtectedRoute><SingleInvoice /></ProtectedRoute>} />
+        <Route path="/invoices/:id/edit"   element={<ProtectedRoute><EditInvoice /></ProtectedRoute>} />
+        <Route path="/invoices/:id/preview" element={<ProtectedRoute><PreviewInvoice /></ProtectedRoute>} />
 
-        <Route path="/invoices"            element={<Invoices />} />
-        <Route path="/invoices/new"        element={<CreateInvoice />} />
-        <Route path="/invoices/payments"   element={<Payments />} />
-        <Route path="/invoices/:id"        element={<SingleInvoice />} />
-        <Route path="/invoices/:id/edit"   element={<EditInvoice />} />
+        {/* Settings - NEEDS PROTECTION */}
+        <Route path="/settings/company" element={<ProtectedRoute><CompanySettings /></ProtectedRoute>} />
+        <Route path="/settings/users"   element={<ProtectedRoute><Users /></ProtectedRoute>} />
+        <Route path="/profile"          element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
+        {/* Reports - NEEDS PROTECTION */}
+        <Route path="/reports/sales"         element={<ProtectedRoute><SalesSummary /></ProtectedRoute>} />
+        <Route path="/reports/top-products"  element={<ProtectedRoute><TopProducts /></ProtectedRoute>} />
+        <Route path="/reports/vat"           element={<ProtectedRoute><VatReport /></ProtectedRoute>} />
+        <Route path="/reports/staff"         element={<ProtectedRoute><StaffPerformance /></ProtectedRoute>} />
+        <Route path="/reports/outstanding"   element={<ProtectedRoute><Outstanding /></ProtectedRoute>} />
 
-        <Route path="/settings/company" element={<CompanySettings />} />
-        <Route path="/settings/users"   element={<Users />} />
-        <Route path="/profile"          element={<Profile />} />
-
-
-        <Route path="/reports/sales"         element={<SalesSummary />} />
-        <Route path="/reports/top-products"  element={<TopProducts />} />
-        <Route path="/reports/vat"           element={<VatReport />} />
-        <Route path="/reports/staff"         element={<StaffPerformance />} />
-        <Route path="/reports/outstanding"   element={<Outstanding />} />
-
-        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
 
         <Route path="*" element={<NotFound />} />

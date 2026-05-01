@@ -13,34 +13,9 @@ import ConfirmModal from '../../components/modals/ConfirmModal';
 import RejectModal from './RejectModal';
 import './SingleQuotation.css';
 import PDFDownloadButton from '../../components/pdf/PDFDownloadButton';
+import { formatCurrencyDecimals, STATUS_META } from '../../utils/helper';
+import Skeleton from '../../components/Sekeleton';
 
-// ── Status config ─────────────────────────────────────────────────
-const STATUS_META = {
-  draft:     { label: 'Draft',     cls: 'sq-st-draft',     icon: 'fa-pen' },
-  sent:      { label: 'Sent',      cls: 'sq-st-sent',      icon: 'fa-paper-plane' },
-  accepted:  { label: 'Accepted',  cls: 'sq-st-accepted',  icon: 'fa-circle-check' },
-  rejected:  { label: 'Rejected',  cls: 'sq-st-rejected',  icon: 'fa-circle-xmark' },
-  expired:   { label: 'Expired',   cls: 'sq-st-expired',   icon: 'fa-clock' },
-  converted: { label: 'Converted', cls: 'sq-st-converted', icon: 'fa-arrows-turn-to-dots' },
-};
-
-const fmt = (n, cur = 'NGN') => {
-  const sym = cur === 'USD' ? '$' : '₦';
-  return sym + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
-};
-
-// ── Skeleton ──────────────────────────────────────────────────────
-const Skeleton = ({ theme }) => (
-  <div className={`sq-skeleton theme-${theme}`}>
-    <div className="sq-skel-hero">
-      <div className="sq-skel-block" style={{ width: '30%', height: 28 }} />
-      <div className="sq-skel-block" style={{ width: '20%', height: 18 }} />
-    </div>
-    {[...Array(5)].map((_, i) => (
-      <div key={i} className="sq-skel-block" style={{ width: `${60 + i * 8}%`, height: 14, marginTop: 10 }} />
-    ))}
-  </div>
-);
 
 // ── Main page ─────────────────────────────────────────────────────
 const SingleQuotation = () => {
@@ -148,7 +123,7 @@ const SingleQuotation = () => {
         <div className="sq-wrapper">
 
           {/* Loading */}
-          {singleLoading && <Skeleton theme={theme} />}
+          {singleLoading && <Skeleton />}
 
           {/* Error */}
           {fetchError && !singleLoading && (
@@ -190,6 +165,12 @@ const SingleQuotation = () => {
 
                 {/* Action buttons */}
                 <div className="sq-hero-actions">
+
+                {/* ── PDF Download — always visible when quotation is loaded ── */}
+                  {/* <PDFDownloadButton type="quotation" doc={q} label="Download PDF"/> */}
+                
+                <button className='pdf-dl-btn' type="button" onClick={() => navigate(`/quotations/${id}/preview`)}><i className="fas fa-file-pdf"/> Preview</button>
+
                   {q.status === 'draft' && isMine && (
                     <>
                       <button className="sq-act-btn primary" onClick={() => navigate(`/quotations/${id}/edit`)} type="button">
@@ -230,12 +211,6 @@ const SingleQuotation = () => {
                       <i className="fas fa-trash" />
                     </button>
                   )}
-                  {/* ── PDF Download — always visible when quotation is loaded ── */}
-                  <PDFDownloadButton
-                    type="quotation"
-                    doc={q}
-                    label="Download PDF"
-                  />
                 </div>
               </motion.div>
 
@@ -279,7 +254,7 @@ const SingleQuotation = () => {
                   <div className="sq-totals">
                     <div className="sq-total-row">
                       <span>Subtotal</span>
-                      <span>{fmt(q.subtotal, q.currency)}</span>
+                      <span>{formatCurrencyDecimals(q.subtotal, q.currency)}</span>
                     </div>
                     {q.discount_amount > 0 && (
                       <div className="sq-total-row sq-disc-row">
@@ -287,21 +262,21 @@ const SingleQuotation = () => {
                           Discount
                           {q.discount_type === 'percentage' && ` (${q.discount_value}%)`}
                         </span>
-                        <span>-{fmt(q.discount_amount, q.currency)}</span>
+                        <span>-{formatCurrencyDecimals(q.discount_amount, q.currency)}</span>
                       </div>
                     )}
                     <div className="sq-total-row">
                       <span>Taxable Amount</span>
-                      <span>{fmt(q.taxable_amount, q.currency)}</span>
+                      <span>{formatCurrencyDecimals(q.taxable_amount, q.currency)}</span>
                     </div>
                     <div className="sq-total-row">
                       <span>VAT</span>
-                      <span>{fmt(q.tax_amount, q.currency)}</span>
+                      <span>{formatCurrencyDecimals(q.tax_amount, q.currency)}</span>
                     </div>
                     <div className="sq-total-divider" />
                     <div className="sq-total-row sq-total-grand">
                       <span>Total</span>
-                      <span>{fmt(q.total_amount, q.currency)}</span>
+                      <span>{formatCurrencyDecimals(q.total_amount, q.currency)}</span>
                     </div>
                     {q.currency === 'USD' && (
                       <p className="sq-exchange-note">
@@ -363,15 +338,15 @@ const SingleQuotation = () => {
                             )}
                           </td>
                           <td className="sq-num-col">{item.quantity}</td>
-                          <td className="sq-num-col">{fmt(item.unit_price, q.currency)}</td>
+                          <td className="sq-num-col">{formatCurrencyDecimals(item.unit_price, q.currency)}</td>
                           <td className="sq-num-col">
                             {item.discount_amount > 0
-                              ? `-${fmt(item.discount_amount, q.currency)}`
+                              ? `-${formatCurrencyDecimals(item.discount_amount, q.currency)}`
                               : '—'}
                           </td>
                           <td className="sq-num-col">{item.tax_rate}%</td>
-                          <td className="sq-num-col">{fmt(item.tax_amount, q.currency)}</td>
-                          <td className="sq-num-col sq-line-total">{fmt(item.line_total, q.currency)}</td>
+                          <td className="sq-num-col">{formatCurrencyDecimals(item.tax_amount, q.currency)}</td>
+                          <td className="sq-num-col sq-line-total">{formatCurrencyDecimals(item.line_total, q.currency)}</td>
                         </tr>
                       ))}
                     </tbody>

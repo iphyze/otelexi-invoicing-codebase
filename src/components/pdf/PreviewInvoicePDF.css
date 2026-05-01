@@ -1,0 +1,559 @@
+/* Invoice Form Container */
+.pdf-preview-container {
+    min-height: 400px;
+    padding: 80px;
+    background-color: white;
+    margin-top: 20px;
+    border-radius: 20px;
+    box-shadow: 0px 15px 50px 0px rgba(0, 0, 0, 0.08);
+}
+
+.theme-dark .pdf-preview-container {
+    background-color: rgb(21, 31, 60);
+}
+
+.pdf-top-flex-box {
+    position: relative;
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px solid #1746bd;
+    padding: 10px 0;
+    margin-bottom: 20px;
+}
+
+.theme-dark .pdf-top-flex-box {
+    border-bottom: 3px solid #446ed9;
+}
+
+.company-logo {
+    position: relative;
+    width: 200px;
+    height: auto;
+}
+
+.pdf-top-right-box {
+    position: relative;
+    width: 30%;
+    text-align: right;
+}
+
+.pdf-tr-header {
+    position: relative;
+    width: 100%;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.pdf-inv-number {
+    position: relative;
+    width: 100%;
+    font-size: 24px;
+    font-weight: bold;
+    color: #1746bd;
+    margin-bottom: 10px;
+}
+
+.theme-dark .pdf-inv-number {
+    color: #446ed9;
+}
+
+.pdf-flex-wrap {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: 12.5px;
+}
+
+.mg-bottom {
+    margin-bottom: 15px;
+}
+
+.pdf-flex-title {
+    position: relative;
+    font-weight: bold;
+}
+
+.pdf-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 10px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    min-width: 120px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Draft - Gray */
+.pdf-st-draft {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+}
+
+/* Sent - Blue */
+.pdf-st-sent {
+    background-color: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #dbeafe;
+}
+
+/* Partial - Orange/Amber */
+.pdf-st-partial {
+    background-color: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+/* Paid - Green */
+.pdf-st-paid {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+/* Overdue - Red */
+.pdf-st-overdue {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+/* Cancelled - Dark Gray/Black */
+.pdf-st-cancelled {
+    background-color: #f9fafb;
+    color: #374151;
+    border: 1px dashed #9ca3af;
+}
+
+
+.pdf-data-flexbox {
+    position: relative;
+    width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.pdf-data-col {
+    position: relative;
+    width: calc(40% - 20px);
+}
+
+.pdf-flex-wrap-two {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: 12.5px;
+    margin-bottom: 3px;
+}
+
+.pdf-flex-title-two {
+    width: 80px;
+    position: relative;
+    font-weight: bold;
+    color: #1746bd;
+    line-height: 26px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.theme-dark .pdf-flex-title-two {
+    color: #446ed9;
+}
+
+.pdf-flex-text-two {
+    width: calc(100% - 85px);
+    line-height: 26px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* pdf table */
+.pdf-table {
+    position: relative;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.pdf-table-inner {
+    width: 100%;
+}
+
+.pdf-table::-webkit-scrollbar {
+    width: 4px;
+    height: 7px;
+}
+
+.pdf-table::-webkit-scrollbar-thumb {
+    background: rgba(26, 86, 219, 0.2);
+    border-radius: 4px;
+}
+
+.pdf-flex-table {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.pdf-flex-table-header {
+    background-color: #1e40af;
+    border-radius: 3px;
+}
+
+.pdf-tab-data {
+    flex: 1;
+    font-size: 12.5px;
+    padding: 10px;
+}
+
+.pdf-tab-data-sn {
+    flex: 0.3;
+}
+
+.pdf-tab-data-desc {
+    flex: 3;
+}
+
+.pdf-tab-data-amt {
+    text-align: right;
+}
+
+.pdf-tab-data-val {
+    text-align: center;
+}
+
+.pdf-flex-table-header .pdf-tab-data {
+    font-weight: 600;
+    color: white;
+}
+
+.pdf-flex-table-body {
+    position: relative;
+    border-bottom: 1px solid #d8dbe0;
+}
+
+.theme-dark .pdf-flex-table-body {
+    border-bottom: 1px solid #253345;
+}
+
+.pdf-flex-table-body-empty {
+    padding: 6px;
+}
+
+.pdf-flex-table-body:nth-child(odd) {
+    background-color: #f7f9ff;
+}
+
+.theme-dark .pdf-flex-table-body:nth-child(odd) {
+    background-color: #051b32;
+}
+
+.pdf-details-flexbox {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.pdf-bank-details {
+    position: relative;
+    width: 50%;
+}
+
+.pdf-bank-details-htext {
+    position: relative;
+    font-weight: bold;
+    font-size: 12.5px;
+    margin-bottom: 10px;
+    color:#1e40af;
+}
+
+.pdfd-flex-wrap {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: 12.5px;
+    margin-bottom: 5px;
+}
+
+.pdfd-flex-title {
+    position: relative;
+    width: 120px;
+    font-weight: 900;
+}
+
+.pdfd-flex-text {
+    position: relative;
+    width: calc(100% - 125px);
+}
+
+.pdf-total-box {
+    position: relative;
+    width: 30%;
+}
+
+.pdf-total-flexbox {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 50px;
+    border-bottom: 1px solid #d8dbe0;
+    margin-bottom: 5px;
+}
+
+.theme-dark .pdf-total-flexbox {
+    border-bottom: 1px solid #253345;
+}
+
+.pdf-total-title {
+    position: relative;
+    width: 150px;
+    height: auto;
+    padding: 7px;
+    font-size: 12.5px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.pdf-total-value {
+    position: relative;
+    width: calc(100% - 200px);
+    height: auto;
+    padding: 7px;
+    font-size: 12.5px;
+    text-align: right;
+}
+
+.pdf-total-flexbox-nettotal {
+    background-color: #e8edff;
+    color: #1033a7;
+    border-radius: 3px;
+    font-weight: 900;
+    border: none;
+}
+
+.pdf-total-flexbox-total {
+    background-color: #1e40af;
+    color: white;
+    border-radius: 3px;
+    font-weight: 900;
+    border: none;
+}
+
+.pdf-note-amt-box {
+    position: relative;
+    width: 50%;
+    margin-bottom: 100px;
+}
+
+.pdf-amt-words-header {
+    position: relative;
+    width: 100%;
+    font-size: 12.5px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color:#1e40af;
+}
+
+.pdf-amt-words-text {
+    position: relative;
+    width: 100%;
+    font-size: 12.5px;
+    font-style: italic;
+    line-height: 22px;
+    margin-bottom: 20px;
+}
+
+.pdf-notes {
+    position: relative;
+    width: 100%;
+    position: relative;
+    width: 100%;
+    font-size: 12.5px;
+    line-height: 22px;
+    font-style: italic;
+    color: rgb(156, 156, 156);
+}
+
+.pdf-signature-box {
+    position: relative;
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 150px;
+}
+
+.pdf-signature-group {
+    position: relative;
+    text-align: center;
+    width: 240px;
+}
+
+.pdf-signature-line {
+    position: relative;
+    margin-bottom: 10px;
+    border-bottom: 1px solid black;
+    padding: 5px;
+    text-align: center;
+    font-size: 12.5px;
+}
+
+.theme-dark .pdf-signature-line {
+    border-bottom: 1px solid white;
+}
+
+.pdf-signature-text {
+    position: relative;
+    color: #373c40;
+    font-size: 12.5px;
+    font-weight: bold;
+}
+
+.theme-dark .pdf-signature-text {
+    color: #e4ebf2;
+}
+.pdf-footer{
+    position: relative;
+    width: 100%;
+    text-align: center;
+    font-size: 12.5px;
+    line-height: 20px;
+    padding: 10px;
+    border-top: 2px solid #d7dadd;
+}
+.theme-dark .pdf-footer{
+    border-top: 2px solid #15364a;
+    color: #8495a0;
+}
+
+
+@media screen and (max-width: 1280px) {
+    .pdf-table{
+        overflow-y: auto;
+    }
+    .pdf-table-inner{
+        width: 120%;
+    }
+    .pdf-preview-container {
+        padding: 100px 50px;
+    }
+    .pdf-bank-details{
+        width: calc(50% - 10px);
+    }
+    .pdf-total-box {
+        width: calc(50% - 10px);
+    }
+    .pdf-signature-group{
+        margin-bottom: 50px;
+    }
+}
+
+@media screen and (max-width: 960px) {
+    .pdf-preview-container {
+        padding: 20px;
+    }
+
+    .company-logo {
+        width: 150px;
+    }
+
+    .pdf-top-right-box {
+        width: 100%;
+        margin-top: 20px;
+        text-align: left;
+    }
+
+    .pdf-tr-header {
+        font-size: 12.5px;
+    }
+
+    .pdf-inv-number {
+        font-size: 18px;
+    }
+
+    .pdf-flex-wrap {
+        justify-content: flex-start;
+    }
+
+    .pdf-status-badge {
+        position: absolute;
+        right: 0px;
+        bottom: 40px;
+    }
+
+    .pdf-data-col {
+        width: 100%;
+    }
+
+    .pdf-table {
+        width: 100%;
+        overflow-y: auto;
+    }
+
+    .pdf-table-inner {
+        width: 240%;
+    }
+
+    .pdf-details-flexbox {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .pdf-bank-details {
+        width: 100%;
+    }
+
+    .pdf-total-box {
+        width: 100%;
+        margin-bottom: 30px;
+    }
+
+    .pdf-note-amt-box {
+        width: 100%;
+    }
+
+    .pdf-signature-group {
+        width: 40%;
+        margin-bottom: 80px;
+    }
+
+}

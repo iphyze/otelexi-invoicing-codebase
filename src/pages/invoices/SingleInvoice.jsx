@@ -15,15 +15,8 @@ import CancelInvoiceModal from './CancelInvoiceModal';
 import RecordPaymentModal from './RecordPaymentModal';
 import './SingleInvoice.css';
 import PDFDownloadButton from '../../components/pdf/PDFDownloadButton';
-
-const STATUS_META = {
-  draft:     { label: 'Draft',     cls: 'sinv-st-draft',     icon: 'fa-pen' },
-  sent:      { label: 'Sent',      cls: 'sinv-st-sent',      icon: 'fa-paper-plane' },
-  partial:   { label: 'Partial',   cls: 'sinv-st-partial',   icon: 'fa-circle-half-stroke' },
-  paid:      { label: 'Paid',      cls: 'sinv-st-paid',      icon: 'fa-circle-check' },
-  overdue:   { label: 'Overdue',   cls: 'sinv-st-overdue',   icon: 'fa-triangle-exclamation' },
-  cancelled: { label: 'Cancelled', cls: 'sinv-st-cancelled', icon: 'fa-ban' },
-};
+import { formatCurrencyDecimals, STATUS_META } from '../../utils/helper';
+import Skeleton from '../../components/Sekeleton';
 
 const METHOD_ICONS = {
   bank_transfer: 'fa-building-columns',
@@ -33,20 +26,7 @@ const METHOD_ICONS = {
   online:        'fa-globe',
 };
 
-const fmt = (n, cur = 'NGN') => {
-  const sym = cur === 'USD' ? '$' : '₦';
-  return sym + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
-};
 
-const Skeleton = ({ theme }) => (
-  <div className={`sinv-skeleton theme-${theme}`}>
-    <div className="sinv-skel-hero">
-      <div className="sinv-skel-block" style={{ width: '30%', height: 28 }} />
-      <div className="sinv-skel-block" style={{ width: '20%', height: 18 }} />
-    </div>
-    {[...Array(5)].map((_, i) => <div key={i} className="sinv-skel-block" style={{ width: `${60 + i * 8}%`, height: 14, marginTop: 10 }} />)}
-  </div>
-);
 
 const SingleInvoice = () => {
   const { id } = useParams();
@@ -162,7 +142,7 @@ const SingleInvoice = () => {
         />
 
         <div className="sinv-wrapper">
-          {singleLoading && <Skeleton theme={theme} />}
+          {singleLoading && <Skeleton/>}
 
           {fetchError && !singleLoading && (
             <div className={`sinv-error theme-${theme}`}>
@@ -199,6 +179,11 @@ const SingleInvoice = () => {
               </div>
 
               <div className="sinv-hero-actions">
+                {/* ── PDF Download — always visible when invoice is loaded ── */}
+                {/* <PDFDownloadButton type="invoice" doc={inv} label="Download PDF"/> */}
+                
+                <button className='pdf-dl-btn' type="button" onClick={() => navigate(`/invoices/${id}/preview`)}><i className="fas fa-file-pdf"/> Preview</button>
+
                 {inv.status === 'draft' && (
                   <>
                     <button className="sinv-act-btn primary" onClick={() => navigate(`/invoices/${id}/edit`)} type="button"><i className="fas fa-pen" /> Edit</button>
@@ -215,24 +200,20 @@ const SingleInvoice = () => {
                     <i className="fas fa-money-bill-wave" /> Record Payment
                   </button>
                 )}
+
                 {payableStatuses.includes(inv.status) && isAdmin && (
                   <button className="sinv-act-btn cancel" onClick={() => setCancelOpen(true)} type="button"><i className="fas fa-ban" /> Cancel</button>
                 )}
-                {/* ── PDF Download — always visible when invoice is loaded ── */}
-                <PDFDownloadButton
-                  type="invoice"
-                  doc={inv}
-                  label="Download PDF"
-                />
-              </div>
+                
+                </div>
             </motion.div>
 
             {/* ── Payment progress bar ── */}
             {inv.status !== 'draft' && inv.status !== 'cancelled' && (
               <motion.div className={`sinv-progress-card theme-${theme}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.05 }}>
                 <div className="sinv-progress-labels">
-                  <span className="sinv-progress-paid"><i className="fas fa-check-circle" /> Paid: {fmt(inv.amount_paid, inv.currency)}</span>
-                  <span className="sinv-progress-total">Total: {fmt(inv.total_amount, inv.currency)}</span>
+                  <span className="sinv-progress-paid"><i className="fas fa-check-circle" /> Paid: {formatCurrencyDecimals(inv.amount_paid, inv.currency)}</span>
+                  <span className="sinv-progress-total">Total: {formatCurrencyDecimals(inv.total_amount, inv.currency)}</span>
                 </div>
                 <div className="sinv-progress-bar-wrap">
                   <div className="sinv-progress-bar" style={{ width: `${paidPct}%`, background: paidPct >= 100 ? 'linear-gradient(90deg,#10b981,#059669)' : 'linear-gradient(90deg,#1a56db,#3b82f6)' }} />
@@ -240,7 +221,7 @@ const SingleInvoice = () => {
                 <div className="sinv-progress-balance">
                   <span>Balance Due:</span>
                   <span className={`sinv-balance-val ${inv.balance_due <= 0 ? 'sinv-bal-zero' : inv.status === 'overdue' ? 'sinv-bal-overdue' : ''}`}>
-                    {fmt(inv.balance_due, inv.currency)}
+                    {formatCurrencyDecimals(inv.balance_due, inv.currency)}
                   </span>
                 </div>
               </motion.div>
@@ -275,15 +256,15 @@ const SingleInvoice = () => {
               <motion.div className={`sinv-card theme-${theme}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.12 }}>
                 <h3 className="sinv-card-title"><i className="fas fa-receipt" /> Financial Summary</h3>
                 <div className="sinv-totals">
-                  <div className="sinv-total-row"><span>Subtotal</span><span>{fmt(inv.subtotal, inv.currency)}</span></div>
-                  {inv.discount_amount > 0 && <div className="sinv-total-row sinv-disc-row"><span>Discount{inv.discount_type === 'percentage' ? ` (${inv.discount_value}%)` : ''}</span><span>-{fmt(inv.discount_amount, inv.currency)}</span></div>}
-                  <div className="sinv-total-row"><span>Taxable Amount</span><span>{fmt(inv.taxable_amount, inv.currency)}</span></div>
-                  <div className="sinv-total-row"><span>VAT</span><span>{fmt(inv.tax_amount, inv.currency)}</span></div>
+                  <div className="sinv-total-row"><span>Subtotal</span><span>{formatCurrencyDecimals(inv.subtotal, inv.currency)}</span></div>
+                  {inv.discount_amount > 0 && <div className="sinv-total-row sinv-disc-row"><span>Discount{inv.discount_type === 'percentage' ? ` (${inv.discount_value}%)` : ''}</span><span>-{formatCurrencyDecimals(inv.discount_amount, inv.currency)}</span></div>}
+                  <div className="sinv-total-row"><span>Taxable Amount</span><span>{formatCurrencyDecimals(inv.taxable_amount, inv.currency)}</span></div>
+                  <div className="sinv-total-row"><span>VAT</span><span>{formatCurrencyDecimals(inv.tax_amount, inv.currency)}</span></div>
                   <div className="sinv-total-divider" />
-                  <div className="sinv-total-row sinv-total-grand"><span>Total</span><span>{fmt(inv.total_amount, inv.currency)}</span></div>
+                  <div className="sinv-total-row sinv-total-grand"><span>Total</span><span>{formatCurrencyDecimals(inv.total_amount, inv.currency)}</span></div>
                   {inv.status !== 'draft' && (<>
-                    <div className="sinv-total-row sinv-paid-row"><span>Amount Paid</span><span className="sinv-paid-val">{fmt(inv.amount_paid, inv.currency)}</span></div>
-                    <div className="sinv-total-row sinv-total-balance"><span>Balance Due</span><span className={inv.balance_due <= 0 ? 'sinv-bal-zero' : ''}>{fmt(inv.balance_due, inv.currency)}</span></div>
+                    <div className="sinv-total-row sinv-paid-row"><span>Amount Paid</span><span className="sinv-paid-val">{formatCurrencyDecimals(inv.amount_paid, inv.currency)}</span></div>
+                    <div className="sinv-total-row sinv-total-balance"><span>Balance Due</span><span className={inv.balance_due <= 0 ? 'sinv-bal-zero' : ''}>{formatCurrencyDecimals(inv.balance_due, inv.currency)}</span></div>
                   </>)}
                 </div>
                 {inv.currency === 'USD' && <p className="sinv-exchange-note"><i className="fas fa-circle-info" /> Exchange: 1 USD = ₦{inv.exchange_rate?.toLocaleString()}</p>}
@@ -331,11 +312,11 @@ const SingleInvoice = () => {
                           {item.product_sku && <p className="sinv-item-sku">SKU: {item.product_sku} {item.product_uom ? `· ${item.product_uom}` : ''}</p>}
                         </td>
                         <td className="sinv-num-col">{item.quantity}</td>
-                        <td className="sinv-num-col">{fmt(item.unit_price, inv.currency)}</td>
-                        <td className="sinv-num-col">{item.discount_amount > 0 ? `-${fmt(item.discount_amount, inv.currency)}` : '—'}</td>
+                        <td className="sinv-num-col">{formatCurrencyDecimals(item.unit_price, inv.currency)}</td>
+                        <td className="sinv-num-col">{item.discount_amount > 0 ? `-${formatCurrencyDecimals(item.discount_amount, inv.currency)}` : '—'}</td>
                         <td className="sinv-num-col">{item.tax_rate}%</td>
-                        <td className="sinv-num-col">{fmt(item.tax_amount, inv.currency)}</td>
-                        <td className="sinv-num-col sinv-line-total">{fmt(item.line_total, inv.currency)}</td>
+                        <td className="sinv-num-col">{formatCurrencyDecimals(item.tax_amount, inv.currency)}</td>
+                        <td className="sinv-num-col sinv-line-total">{formatCurrencyDecimals(item.line_total, inv.currency)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -370,7 +351,7 @@ const SingleInvoice = () => {
                         </div>
                         <div className="sinv-payment-details">
                           <div className="sinv-payment-top">
-                            <span className="sinv-payment-amount">{fmt(pmt.amount, inv.currency)}</span>
+                            <span className="sinv-payment-amount">{formatCurrencyDecimals(pmt.amount, inv.currency)}</span>
                             <span className="sinv-payment-method-label">{pmt.payment_method?.replace('_', ' ')}</span>
                             {pmt.reference && <span className="sinv-payment-ref"><i className="fas fa-hashtag" /> {pmt.reference}</span>}
                           </div>
