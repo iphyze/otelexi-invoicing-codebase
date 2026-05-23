@@ -892,3 +892,241 @@
         width: 100%;
     }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Overdue reminder workflow
+───────────────────────────────────────────────────────────── */
+.sinv-act-btn.reminder {
+    border-color: rgba(245, 158, 11, 0.34);
+    color: #d97706;
+}
+
+.sinv-act-btn.reminder:hover {
+    background: rgba(245, 158, 11, 0.09);
+    border-color: #f59e0b;
+    transform: translateY(-1px);
+}
+
+.theme-dark .sinv-act-btn.reminder {
+    color: #fbbf24;
+}
+
+.sinv-reminder-send {
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.sinv-reminder-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sinv-reminder-row {
+    display: grid;
+    grid-template-columns: 38px minmax(220px, 1fr) auto;
+    align-items: center;
+    gap: 13px;
+    padding: 13px;
+    border-radius: 12px;
+}
+
+.theme-light .sinv-reminder-row {
+    background: #f8faff;
+    border: 1px solid #eef2ff;
+}
+
+.theme-dark .sinv-reminder-row {
+    background: rgba(15, 23, 42, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sinv-reminder-status {
+    width: 37px;
+    height: 37px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    font-size: 14px;
+}
+
+.sinv-reminder-status.sent {
+    color: #059669;
+    background: rgba(16, 185, 129, 0.12);
+}
+
+.sinv-reminder-status.failed {
+    color: #dc2626;
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.sinv-reminder-status.skipped {
+    color: #d97706;
+    background: rgba(245, 158, 11, 0.12);
+}
+
+.sinv-reminder-details div {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.sinv-reminder-details strong {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.sinv-reminder-pill {
+    font-size: 10px;
+    font-weight: 750;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 50px;
+}
+
+.sinv-reminder-pill.sent {
+    color: #059669;
+    background: rgba(16, 185, 129, 0.11);
+}
+
+.sinv-reminder-pill.failed {
+    color: #dc2626;
+    background: rgba(239, 68, 68, 0.11);
+}
+
+.sinv-reminder-pill.skipped {
+    color: #d97706;
+    background: rgba(245, 158, 11, 0.11);
+}
+
+.sinv-reminder-details p,
+.sinv-reminder-details small {
+    display: block;
+    margin: 5px 0 0;
+    font-size: 11.5px;
+    opacity: 0.62;
+    line-height: 1.45;
+}
+
+.sinv-reminder-details small {
+    opacity: 1;
+    color: #dc2626;
+}
+
+.sinv-reminder-row time {
+    font-size: 11.5px;
+    opacity: 0.5;
+    white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+    .sinv-reminder-row {
+        grid-template-columns: 38px 1fr;
+    }
+
+    .sinv-reminder-row time {
+        grid-column: 2;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Payment receipt actions
+───────────────────────────────────────────────────────────── */
+.sinv-receipt-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.09);
+    color: #1a56db;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.sinv-receipt-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-left: auto;
+}
+
+.sinv-receipt-actions .pdf-dl-btn,
+.sinv-receipt-email,
+.sinv-receipt-issue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 11px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    text-decoration: none;
+}
+
+.sinv-receipt-actions a {
+    text-decoration: none;
+}
+
+.sinv-receipt-actions .pdf-dl-btn {
+    border: 1px solid rgba(26, 86, 219, 0.25);
+    background: rgba(26, 86, 219, 0.06);
+    color: #1a56db;
+    box-shadow: none;
+}
+
+.sinv-receipt-actions .pdf-dl-btn:hover,
+.sinv-receipt-email:hover {
+    transform: translateY(-1px);
+    background: rgba(26, 86, 219, 0.12);
+}
+
+.sinv-receipt-email {
+    border: 1px solid rgba(26, 86, 219, 0.24);
+    background: transparent;
+    color: #1a56db;
+}
+
+.sinv-receipt-issue {
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.08);
+    color: #059669;
+}
+
+.sinv-receipt-issue:hover {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.14);
+    transform: translateY(-1px);
+}
+
+.sinv-receipt-pending {
+    font-size: 11.5px;
+    opacity: 0.45;
+}
+
+.theme-dark .sinv-receipt-tag,
+.theme-dark .sinv-receipt-actions .pdf-dl-btn,
+.theme-dark .sinv-receipt-email {
+    color: #60a5fa;
+}
+
+@media (max-width: 840px) {
+    .sinv-payment-row {
+        flex-wrap: wrap;
+    }
+
+    .sinv-receipt-actions {
+        width: 100%;
+        margin: 7px 0 0 52px;
+        justify-content: flex-start;
+    }
+}

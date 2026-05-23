@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import NavBar from '../../components/NavBar';
 import Header from '../../components/Header';
 import PageNav from '../../components/PageNav';
+import DocumentFormHero from '../../components/documents/DocumentFormHero';
 import useThemeStore from '../../stores/useThemeStore';
 import useQuotationStore from '../../stores/useQuotationStore';
 import useToastStore from '../../stores/useToastStore';
@@ -205,6 +206,8 @@ const EditQuotation = () => {
             { label: 'Edit', active: true },
           ]}
         />
+
+        <DocumentFormHero type="quotation" mode="edit" documentNumber={quotation?.quotation_number || ''} />
 
         {quotation && (
           <div className="qf-edit-notice">

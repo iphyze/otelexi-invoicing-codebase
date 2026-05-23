@@ -13,9 +13,10 @@ import './GlobalSearch.css';
 // Each searcher returns normalised result objects.
 // Only run entities the current role has access to.
 const buildSearchers = (role) => {
-  const isAdmin = role === 'admin';
+  const isAdmin = ['super_admin', 'admin'].includes(role);
+  const isSuperAdmin = role === 'super_admin';
   const isSales = role === 'sales';
-  const isAccountant = role === 'accountant';
+  const isAccounting = role === 'accounting';
 
   return [
     // Clients — all roles
@@ -100,7 +101,7 @@ const buildSearchers = (role) => {
     },
 
     // Users — admin only
-    ...(isAdmin ? [{
+    ...(isSuperAdmin ? [{
       key: 'users',
       label: 'Users',
       icon: 'fa-users-cog',
@@ -130,12 +131,15 @@ const BADGE_CLS = {
   paid: 'gs-badge-green',
   partial: 'gs-badge-amber',
   overdue: 'gs-badge-red',
+  credited: 'gs-badge-amber',
+  reversed: 'gs-badge-grey',
   cancelled: 'gs-badge-grey',
   rejected: 'gs-badge-red',
   converted: 'gs-badge-purple',
   admin: 'gs-badge-purple',
   sales: 'gs-badge-blue',
-  accountant: 'gs-badge-green',
+  accounting: 'gs-badge-green',
+  super_admin: 'gs-badge-blue',
   Inactive: 'gs-badge-red',
   'Low Stock': 'gs-badge-amber',
 };

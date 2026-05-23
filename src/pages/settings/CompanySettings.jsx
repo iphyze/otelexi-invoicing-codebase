@@ -52,7 +52,7 @@ const CompanySettings = () => {
 
   // Guard: redirect non-admins
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== 'super_admin') {
       navigate('/profile');
       return;
     }

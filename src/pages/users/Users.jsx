@@ -15,9 +15,10 @@ import { useNavigate } from 'react-router-dom';
 import './Users.css';
 
 const ROLE_META = {
-  admin:      { label: 'Admin',      cls: 'use-role-admin',      icon: 'fa-shield-halved' },
-  sales:      { label: 'Sales',      cls: 'use-role-sales',      icon: 'fa-handshake' },
-  accountant: { label: 'Accountant', cls: 'use-role-acc',        icon: 'fa-calculator' },
+  super_admin: { label: 'Super Admin', cls: 'use-role-admin', icon: 'fa-crown' },
+  admin:       { label: 'Admin', cls: 'use-role-admin', icon: 'fa-shield-halved' },
+  sales:       { label: 'Sales', cls: 'use-role-sales', icon: 'fa-handshake' },
+  accounting:  { label: 'Accounting', cls: 'use-role-acc', icon: 'fa-calculator' },
 };
 
 const RoleBadge = ({ role }) => {
@@ -26,10 +27,11 @@ const RoleBadge = ({ role }) => {
 };
 
 const ROLE_OPTS = [
-  { value: '',           label: 'All Roles' },
-  { value: 'admin',      label: 'Admin',      icon: 'fa-shield-halved' },
-  { value: 'sales',      label: 'Sales',      icon: 'fa-handshake' },
-  { value: 'accountant', label: 'Accountant', icon: 'fa-calculator' },
+  { value: '', label: 'All Roles' },
+  { value: 'super_admin', label: 'Super Admin', icon: 'fa-crown' },
+  { value: 'admin', label: 'Admin', icon: 'fa-shield-halved' },
+  { value: 'sales', label: 'Sales', icon: 'fa-handshake' },
+  { value: 'accounting', label: 'Accounting', icon: 'fa-calculator' },
 ];
 const LIMIT_OPTS = [
   { value: 10, label: '10 / page' },
@@ -62,9 +64,9 @@ const Users = () => {
   const [searchInput, setSearchInput]     = useState(filters.search || '');
   const searchRef = useRef(null);
 
-  // Guard: redirect non-admins
+  // Guard: user and role administration belongs to the Super Admin only
   useEffect(() => {
-    if (me && me.role !== 'admin') { navigate('/profile'); return; }
+    if (me && me.role !== 'super_admin') { navigate('/profile'); return; }
     document.title = 'Otelex | User Management';
     fetchUsers();
   }, []);

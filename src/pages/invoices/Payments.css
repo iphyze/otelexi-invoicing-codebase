@@ -87,3 +87,17 @@
 .pmt-pag-btn:hover:not(:disabled):not(.is-active) { border-color: #1a56db; color: #1a56db; background: rgba(26,86,219,0.06); }
 .pmt-pag-btn.is-active { background: #1a56db; border-color: #1a56db; color: #fff; box-shadow: 0 3px 8px rgba(26,86,219,0.3); }
 .pmt-pag-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+/* Payment receipt reference */
+.pmt-receipt-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(26, 86, 219, 0.08);
+  color: #1a56db;
+  font-size: 10.5px;
+  font-weight: 700;
+}

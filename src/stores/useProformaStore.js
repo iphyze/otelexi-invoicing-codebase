@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import proformaService from '../services/proformaService';
+import { sendDocumentWithPdf } from '../utils/documentEmail';
 
 const DEFAULT_FILTERS = {
   search: '', status: '', client_id: '',
@@ -95,7 +96,10 @@ const useProformaStore = create(
 
       // ── Status transitions ─────────────────────────────────────
       sendProforma: async (id) => {
-        const res = await proformaService.sendProforma(id);
+        const res = await sendDocumentWithPdf({
+          documentType: 'proforma',
+          documentId: id,
+        });
         get().refreshAfterAction(id);
         return res.data;
       },

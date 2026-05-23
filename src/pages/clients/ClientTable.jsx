@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import useClientStore from '../../stores/useClientStore';
 import useThemeStore from '../../stores/useThemeStore';
 import useToastStore from '../../stores/useToastStore';
+import useAuthStore from '../../stores/useAuthStore';
 import SelectInput from '../../components/SelectInput';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import { ClientFormModal, ContactFormModal } from './ClientModals';
@@ -42,7 +43,7 @@ const SkeletonRow = () => (
   </tr>
 );
 
-const EmptyState = ({ onNew, error, onRetry, theme }) => (
+const EmptyState = ({ onNew, error, onRetry, theme, canManageClients }) => (
   <div className={`ct-empty theme-${theme}`}>
     <div className={`ct-empty-icon ${error ? 'error-icon' : ''}`}>
       <i className={`fas ${error ? 'fa-triangle-exclamation' : 'fa-users'}`} />
@@ -52,7 +53,7 @@ const EmptyState = ({ onNew, error, onRetry, theme }) => (
     <div className="ct-empty-actions">
       {error
         ? <button className="ct-empty-btn primary" onClick={onRetry}><i className="fas fa-rotate-right" /> Retry</button>
-        : <button className="ct-empty-btn primary" onClick={onNew}><i className="fas fa-plus" /> Add New Client</button>
+        : canManageClients ? <button className="ct-empty-btn primary" onClick={onNew}><i className="fas fa-plus" /> Add New Client</button> : null
       }
     </div>
   </div>
@@ -62,6 +63,10 @@ const ClientTable = () => {
   const { theme } = useThemeStore();
   const navigate = useNavigate();
   const { showToast } = useToastStore();
+  const { user } = useAuthStore();
+  const canManageClients = ['super_admin', 'admin', 'sales'].includes(user?.role);
+  const canChangeClientStatus = ['super_admin', 'admin'].includes(user?.role);
+  const canDeleteClients = user?.role === 'super_admin';
 
   const {
     clients, meta, filters, loading, error,
@@ -171,14 +176,16 @@ const ClientTable = () => {
           >
             <i className="fas fa-file-excel" /> Export
           </button>
-          <button className="ct-btn-primary" onClick={() => setModal({ type: 'client', data: null })} type="button">
-            <i className="fas fa-plus" /> New Client
-          </button>
+          {canManageClients && (
+            <button className="ct-btn-primary" onClick={() => setModal({ type: 'client', data: null })} type="button">
+              <i className="fas fa-plus" /> New Client
+            </button>
+          )}
         </div>
       </div>
 
       {/* ── Bulk bar ──────────────────────────────────────────────── */}
-      {selectedIds.length > 0 && (
+      {selectedIds.length > 0 && canChangeClientStatus && (
         <div className={`ct-bulk-bar theme-${theme}`}>
           <span className="ct-bulk-count"><i className="fas fa-square-check" /> {selectedIds.length} selected</span>
           <div className="ct-bulk-actions">
@@ -193,10 +200,10 @@ const ClientTable = () => {
                 <i className="fas fa-user-slash" /> Deactivate
               </button>
             )}
-            <button className="ct-bulk-btn danger"
+            {canDeleteClients && <button className="ct-bulk-btn danger"
               onClick={() => setConfirm({ open: true, type: 'delete', ids: selectedIds })} type="button">
               <i className="fas fa-trash" /> Delete
-            </button>
+            </button>}
             <button className="ct-bulk-btn neutral" onClick={clearSelection} type="button">
               <i className="fas fa-xmark" /> Clear
             </button>
@@ -210,12 +217,14 @@ const ClientTable = () => {
           <thead>
             <tr>
               <th className="ct-th ct-th-check">
-                <label className="ct-check-label">
-                  <input type="checkbox" className="ct-check-input"
-                    checked={allSelected}
-                    onChange={() => toggleSelectAll(allIds)} />
-                  <span className="ct-check-box" />
-                </label>
+                {canChangeClientStatus && (
+                  <label className="ct-check-label">
+                    <input type="checkbox" className="ct-check-input"
+                      checked={allSelected}
+                      onChange={() => toggleSelectAll(allIds)} />
+                    <span className="ct-check-box" />
+                  </label>
+                )}
               </th>
               <th className="ct-th sortable" onClick={() => {
                 if (filters.sortBy === 'company_name') setFilter('sortOrder', filters.sortOrder === 'ASC' ? 'DESC' : 'ASC');
@@ -240,6 +249,7 @@ const ClientTable = () => {
                 <td colSpan={8} style={{ padding: 0, border: 'none' }}>
                   <EmptyState
                     error={error} theme={theme}
+                    canManageClients={canManageClients}
                     onNew={() => setModal({ type: 'client', data: null })}
                     onRetry={handleRetry}
                   />
@@ -249,12 +259,14 @@ const ClientTable = () => {
               clients.map((client) => (
                 <tr key={client.id} className={`ct-row ${selectedIds.includes(client.id) ? 'is-selected' : ''}`}>
                   <td>
-                    <label className="ct-check-label">
-                      <input type="checkbox" className="ct-check-input"
-                        checked={selectedIds.includes(client.id)}
-                        onChange={() => toggleSelect(client.id)} />
-                      <span className="ct-check-box" />
-                    </label>
+                    {canChangeClientStatus && (
+                      <label className="ct-check-label">
+                        <input type="checkbox" className="ct-check-input"
+                          checked={selectedIds.includes(client.id)}
+                          onChange={() => toggleSelect(client.id)} />
+                        <span className="ct-check-box" />
+                      </label>
+                    )}
                   </td>
                   <td>
                     <div className="ct-company">
@@ -302,15 +314,19 @@ const ClientTable = () => {
                         onClick={() => navigate(`/clients/${client.id}`)}>
                         <i className="fas fa-eye" />
                       </button>
-                      <button className="ct-action-btn edit" title="Edit"
-                        onClick={() => setModal({ type: 'client', data: client })}>
-                        <i className="fas fa-pen" />
-                      </button>
-                      <button className="ct-action-btn contact" title="Add Contact"
-                        onClick={() => setModal({ type: 'contact', data: { preselectedClientId: client.id } })}>
-                        <i className="fas fa-user-plus" />
-                      </button>
-                      {client.is_active === 1 ? (
+                      {canManageClients && (
+                        <>
+                          <button className="ct-action-btn edit" title="Edit"
+                            onClick={() => setModal({ type: 'client', data: client })}>
+                            <i className="fas fa-pen" />
+                          </button>
+                          <button className="ct-action-btn contact" title="Add Contact"
+                            onClick={() => setModal({ type: 'contact', data: { preselectedClientId: client.id } })}>
+                            <i className="fas fa-user-plus" />
+                          </button>
+                        </>
+                      )}
+                      {canChangeClientStatus && (client.is_active === 1 ? (
                         <button className="ct-action-btn deactivate" title="Deactivate"
                           onClick={() => setConfirm({ open: true, type: 'deactivate', ids: [client.id] })}>
                           <i className="fas fa-user-slash" />
@@ -320,11 +336,11 @@ const ClientTable = () => {
                           onClick={() => setConfirm({ open: true, type: 'reactivate', ids: [client.id] })}>
                           <i className="fas fa-user-check" />
                         </button>
-                      )}
-                      <button className="ct-action-btn delete" title="Delete"
+                      ))}
+                      {canDeleteClients && <button className="ct-action-btn delete" title="Delete"
                         onClick={() => setConfirm({ open: true, type: 'delete', ids: [client.id] })}>
                         <i className="fas fa-trash" />
-                      </button>
+                      </button>}
                     </div>
                   </td>
                 </tr>
@@ -353,8 +369,12 @@ const ClientTable = () => {
       )}
 
       {/* ── Modals ────────────────────────────────────────────────── */}
-      <ClientFormModal open={modal.type === 'client'} onClose={() => setModal({ type: null, data: null })} client={modal.data} />
-      <ContactFormModal open={modal.type === 'contact'} onClose={() => setModal({ type: null, data: null })} preselectedClientId={modal.data?.preselectedClientId} />
+      {canManageClients && (
+        <>
+          <ClientFormModal open={modal.type === 'client'} onClose={() => setModal({ type: null, data: null })} client={modal.data} />
+          <ContactFormModal open={modal.type === 'contact'} onClose={() => setModal({ type: null, data: null })} preselectedClientId={modal.data?.preselectedClientId} />
+        </>
+      )}
 
       <ConfirmModal open={confirm.open && confirm.type === 'delete'} onClose={() => setConfirm({ open: false, type: '', ids: [] })}
         onConfirm={handleConfirmAction} title="Delete Client(s)"

@@ -1,443 +1,819 @@
-// pages/dashboard/Dashboard.jsx
-import React, { useState, useEffect } from 'react';
+// pages/home/Dashboard.jsx
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import NavBar from '../../components/NavBar';
 import Header from '../../components/Header';
+import NavBar from '../../components/NavBar';
 import PageNav from '../../components/PageNav';
 import useAuthStore from '../../stores/useAuthStore';
-import useThemeStore from '../../stores/useThemeStore';
 import useDashboardStore from '../../stores/useDashboardStore';
+import useThemeStore from '../../stores/useThemeStore';
+import useToastStore from '../../stores/useToastStore';
+import automationService from '../../services/automationService';
 import './Dashboard.css';
 
-// ── Helpers ───────────────────────────────────────────────────────
-const fmt = (n, currency = 'NGN') => {
+const PERIOD_OPTIONS = [
+  { value: 'month', label: 'This Month' },
+  { value: 'quarter', label: 'Quarter' },
+  { value: 'year', label: 'Year to Date' },
+];
+
+const METHOD_LABELS = {
+  bank_transfer: 'Bank Transfer',
+  cash: 'Cash',
+  cheque: 'Cheque',
+  pos: 'POS',
+  online: 'Online',
+  other: 'Other',
+};
+
+const STATUS_META = {
+  draft: { label: 'Draft', className: 'st-draft', color: '#94a3b8' },
+  sent: { label: 'Sent', className: 'st-sent', color: '#2563eb' },
+  partial: { label: 'Partially Paid', className: 'st-partial', color: '#f59e0b' },
+  paid: { label: 'Paid', className: 'st-paid', color: '#10b981' },
+  overdue: { label: 'Overdue', className: 'st-overdue', color: '#ef4444' },
+  cancelled: { label: 'Cancelled', className: 'st-cancelled', color: '#64748b' },
+};
+
+const formatCurrency = (value, currency = 'NGN') => new Intl.NumberFormat('en-NG', {
+  style: 'currency',
+  currency,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+}).format(Number(value || 0));
+
+const formatShortCurrency = (value, currency = 'NGN') => {
+  const amount = Number(value || 0);
   const symbol = currency === 'USD' ? '$' : '₦';
-  return symbol + Number(n || 0).toLocaleString('en-NG', {
-    minimumFractionDigits: 2, maximumFractionDigits: 2,
+  if (Math.abs(amount) >= 1_000_000_000) return `${symbol}${(amount / 1_000_000_000).toFixed(1)}B`;
+  if (Math.abs(amount) >= 1_000_000) return `${symbol}${(amount / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(amount) >= 1_000) return `${symbol}${(amount / 1_000).toFixed(1)}K`;
+  return `${symbol}${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const formatDate = (value) => {
+  if (!value) return '—';
+  return new Date(`${value}T00:00:00`).toLocaleDateString('en-NG', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 };
-const fmtShort = (n, currency = 'NGN') => {
-  const symbol = currency === 'USD' ? '$' : '₦';
-  const num = Number(n || 0);
-  if (num >= 1_000_000) return `${symbol}${(num / 1_000_000).toFixed(1)}M`;
-  if (num >= 1_000) return `${symbol}${(num / 1_000).toFixed(1)}K`;
-  return `${symbol}${num.toFixed(2)}`;
+
+const formatUpdatedTime = (value) => {
+  if (!value) return 'Updating...';
+  return new Date(value).toLocaleTimeString('en-NG', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
-const methodLabel = {
-  bank_transfer: 'Bank Transfer',
-  cash: 'Cash', cheque: 'Cheque', pos: 'POS', other: 'Other',
+const formatRunDateTime = (value) => {
+  if (!value) return 'Never run';
+  return new Date(value.replace(' ', 'T')).toLocaleString('en-NG', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
-// ── Shimmer skeleton ──────────────────────────────────────────────
-const Skel = ({ w = '100%', h = 16, r = 6 }) => (
-  <span className="db-skel" style={{ width: w, height: h, borderRadius: r }} />
+const plural = (count, singular, pluralText = `${singular}s`) => (
+  `${count} ${Number(count) === 1 ? singular : pluralText}`
 );
 
-const SkelRows = ({ n = 4 }) => (
+const Skeleton = ({ width = '100%', height = 14, radius = 7 }) => (
+  <span className="db-skel" style={{ width, height, borderRadius: radius }} />
+);
+
+const SkeletonRows = ({ rows = 4 }) => (
   <div className="db-skel-rows">
-    {[...Array(n)].map((_, i) => <div key={i} className="db-skel-row" />)}
+    {Array.from({ length: rows }).map((_, index) => (
+      <div key={index} className="db-skel-row" />
+    ))}
   </div>
 );
 
-// ── KPI Card ──────────────────────────────────────────────────────
-const KpiCard = ({ icon, label, value, sub, subIcon, gradient, glow, delay, onClick, loading }) => (
-  <motion.div
-    className={`kpi-card ${onClick ? 'clickable' : ''}`}
-    initial={{ opacity: 0, y: 18 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.38, delay, ease: 'easeOut' }}
-    onClick={onClick}
-  >
-    <div className="kpi-accent" style={{ background: `linear-gradient(180deg, ${gradient[0]}, ${gradient[1]})` }} />
-    <div className="kpi-icon-wrap" style={{
-      background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
-      boxShadow: `0 8px 20px ${glow}`,
-    }}>
-      <i className={`fas ${icon}`} />
-    </div>
-    <div className="kpi-body">
-      <p className="kpi-label">{label}</p>
-      <h3 className="kpi-value">{loading ? <Skel w={90} h={24} /> : (value ?? '—')}</h3>
-      {sub !== undefined && (
-        <p className="kpi-sub">
-          {loading ? <Skel w={120} h={12} /> : (
-            <>{subIcon && <i className={`fas ${subIcon}`} />} {sub ?? '—'}</>
-          )}
-        </p>
-      )}
-    </div>
-    <div className="kpi-blob" style={{ background: `radial-gradient(circle at top right, ${gradient[0]}18, transparent 70%)` }} />
-  </motion.div>
-);
-
-// ── Status Pill ───────────────────────────────────────────────────
-const statusMap = {
-  draft: { cls: 'st-draft', label: 'Draft' },
-  sent: { cls: 'st-sent', label: 'Sent' },
-  partial: { cls: 'st-partial', label: 'Partial' },
-  paid: { cls: 'st-paid', label: 'Paid' },
-  overdue: { cls: 'st-overdue', label: 'Overdue' },
-  cancelled: { cls: 'st-cancelled', label: 'Cancelled' },
-};
-const StatusPill = ({ status }) => {
-  const { cls, label } = statusMap[status] || statusMap.draft;
-  return <span className={`st-pill ${cls}`}>{label}</span>;
-};
-
-// ── Panel shell ───────────────────────────────────────────────────
-const Panel = ({ title, icon, action, onAction, children, delay = 0 }) => {
-  const { theme } = useThemeStore();
-  return (
-    <motion.div
-      className={`db-panel theme-${theme}`}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay }}
-    >
-      <div className="db-panel-header">
-        <h4><i className={`fas ${icon}`} /> {title}</h4>
-        {action && (
-          <button className="db-panel-link" onClick={onAction} type="button">{action}</button>
-        )}
-      </div>
-      {children}
-    </motion.div>
-  );
-};
-
-const Empty = ({ icon, text }) => (
+const EmptyState = ({ icon, title, text }) => (
   <div className="db-empty">
     <i className={`fas ${icon}`} />
-    <p>{text}</p>
+    <p className="db-empty-title">{title}</p>
+    {text && <p className="db-empty-text">{text}</p>}
   </div>
 );
 
-// ── Revenue Bar Chart (pure CSS) ──────────────────────────────────
-const RevenueChart = ({ trend, currency }) => {
-  if (!trend || trend.length === 0) return <Empty icon="fa-chart-bar" text="No revenue data yet" />;
-  const max = Math.max(...trend.flatMap((t) => [t.invoiced, t.collected]), 1);
+const Panel = ({ title, icon, action, onAction, children, className = '', delay = 0 }) => (
+  <motion.section
+    className={`db-panel ${className}`}
+    initial={{ opacity: 0, y: 15 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.33, delay, ease: 'easeOut' }}
+  >
+    <header className="db-panel-header">
+      <h3><i className={`fas ${icon}`} /> {title}</h3>
+      {action && (
+        <button type="button" className="db-panel-link" onClick={onAction}>
+          {action} <i className="fas fa-arrow-right" />
+        </button>
+      )}
+    </header>
+    {children}
+  </motion.section>
+);
+
+const DeltaBadge = ({ change, loading }) => {
+  if (loading) return <Skeleton width={78} height={18} radius={20} />;
+  if (change === undefined) return <span className="delta-badge delta-live">Live</span>;
+  if (change === null) return <span className="delta-badge delta-new">New activity</span>;
+  if (Number(change) === 0) return <span className="delta-badge delta-flat">No change</span>;
+
+  const positive = Number(change) > 0;
   return (
-    <div className="rev-chart">
-      <div className="rev-bars-row">
-        {trend.map((t) => {
-          const [y, m] = t.month.split('-');
-          const label = new Date(y, m - 1).toLocaleString('en', { month: 'short' });
-          return (
-            <div key={t.month} className="rev-col">
-              <div className="rev-bars">
-                <div className="rev-bar invoiced" style={{ height: `${Math.round((t.invoiced / max) * 100)}%` }}
-                  title={`Invoiced: ${fmtShort(t.invoiced, currency)}`} />
-                <div className="rev-bar collected" style={{ height: `${Math.round((t.collected / max) * 100)}%` }}
-                  title={`Collected: ${fmtShort(t.collected, currency)}`} />
-              </div>
-              <span className="rev-month">{label}</span>
+    <span className={`delta-badge ${positive ? 'delta-positive' : 'delta-negative'}`}>
+      <i className={`fas ${positive ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}`} />
+      {Math.abs(Number(change)).toFixed(1)}%
+    </span>
+  );
+};
+
+const KpiCard = ({ icon, label, value, subText, change, tone, delay, onClick, loading }) => (
+  <motion.button
+    type="button"
+    className={`db-kpi db-kpi-${tone}`}
+    initial={{ opacity: 0, y: 14 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.34, delay }}
+    onClick={onClick}
+  >
+    <div className="db-kpi-head">
+      <span className="db-kpi-icon"><i className={`fas ${icon}`} /></span>
+      <DeltaBadge change={change} loading={loading} />
+    </div>
+    <p className="db-kpi-label">{label}</p>
+    <h3 className="db-kpi-value">{loading ? <Skeleton width={112} height={29} /> : value}</h3>
+    <p className="db-kpi-sub">{loading ? <Skeleton width={142} height={13} /> : subText}</p>
+  </motion.button>
+);
+
+const InsightCard = ({ icon, label, value, loading }) => (
+  <div className="db-insight-card">
+    <i className={`fas ${icon}`} />
+    <div>
+      <p>{label}</p>
+      <strong>{loading ? <Skeleton width={65} height={18} /> : value}</strong>
+    </div>
+  </div>
+);
+
+const StatusPill = ({ status }) => {
+  const meta = STATUS_META[status] || STATUS_META.draft;
+  return <span className={`st-pill ${meta.className}`}>{meta.label}</span>;
+};
+
+const RevenueChart = ({ data, currency, loading }) => {
+  if (loading) return <Skeleton width="100%" height={235} radius={14} />;
+  if (!data?.length || data.every((item) => item.invoiced === 0 && item.collected === 0)) {
+    return <EmptyState icon="fa-chart-column" title="No sales trend yet" text="Finalised invoices and received payments will appear here." />;
+  }
+
+  const maximum = Math.max(...data.flatMap((item) => [item.invoiced, item.collected]), 1);
+
+  return (
+    <div className="db-revenue-chart">
+      <div className="db-chart-bars">
+        {data.map((item) => (
+          <div key={item.month} className="db-chart-column">
+            <div className="db-chart-bar-group">
+              <span
+                className="db-chart-bar bar-invoiced"
+                style={{ height: `${Math.max((item.invoiced / maximum) * 100, item.invoiced > 0 ? 4 : 0)}%` }}
+                title={`Invoiced: ${formatCurrency(item.invoiced, currency)}`}
+              />
+              <span
+                className="db-chart-bar bar-collected"
+                style={{ height: `${Math.max((item.collected / maximum) * 100, item.collected > 0 ? 4 : 0)}%` }}
+                title={`Collected: ${formatCurrency(item.collected, currency)}`}
+              />
             </div>
-          );
-        })}
+            <span className="db-chart-label">{item.label}</span>
+          </div>
+        ))}
       </div>
-      <div className="rev-legend">
-        <span><span className="rev-dot invoiced" /> Invoiced</span>
-        <span><span className="rev-dot collected" /> Collected</span>
+      <div className="db-chart-legend">
+        <span><i className="legend-dot invoiced" /> Invoiced</span>
+        <span><i className="legend-dot collected" /> Collected</span>
       </div>
     </div>
   );
 };
 
-// ── Aging Horizontal Bars ─────────────────────────────────────────
-const AgingChart = ({ aging, currency }) => {
-  if (!aging || aging.every((a) => a.count === 0))
-    return <Empty icon="fa-clock" text="No outstanding invoices" />;
-  const maxAmt = Math.max(...aging.map((a) => a.amount), 1);
-  const colors = ['#10b981', '#f59e0b', '#f97316', '#ef4444', '#dc2626'];
+const StatusDistribution = ({ data, loading }) => {
+  const populated = (data || []).filter((item) => item.count > 0);
+  const total = populated.reduce((sum, item) => sum + item.count, 0);
+
+  const donutBackground = useMemo(() => {
+    if (!total) return 'conic-gradient(#e2e8f0 0 100%)';
+    let previous = 0;
+    const segments = populated.map((item) => {
+      const start = previous;
+      previous += (item.count / total) * 100;
+      const color = STATUS_META[item.status]?.color || '#94a3b8';
+      return `${color} ${start}% ${previous}%`;
+    });
+    return `conic-gradient(${segments.join(', ')})`;
+  }, [populated, total]);
+
+  if (loading) return <Skeleton width="100%" height={235} radius={14} />;
+  if (!total) return <EmptyState icon="fa-chart-pie" title="No invoice status data" text="Invoices for the selected period will appear here." />;
+
   return (
-    <div className="aging-chart">
-      {aging.map((bucket, i) => (
-        <div key={bucket.bracket} className="aging-row">
-          <span className="aging-label">{bucket.label}</span>
-          <div className="aging-track">
-            <div className="aging-fill" style={{ width: `${Math.round((bucket.amount / maxAmt) * 100)}%`, background: colors[i] }} />
+    <div className="db-status-distribution">
+      <div className="db-donut" style={{ background: donutBackground }}>
+        <div className="db-donut-centre">
+          <strong>{total}</strong>
+          <span>Invoices</span>
+        </div>
+      </div>
+      <div className="db-status-legend">
+        {populated.map((item) => (
+          <div key={item.status} className="db-status-row">
+            <span className="db-status-dot" style={{ background: STATUS_META[item.status]?.color }} />
+            <span className="db-status-name">{item.label}</span>
+            <strong>{item.count}</strong>
           </div>
-          <div className="aging-meta">
-            <span className="aging-count">{bucket.count}</span>
-            <span className="aging-amount">{fmtShort(bucket.amount, currency)}</span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AgingChart = ({ data, currency, loading }) => {
+  if (loading) return <SkeletonRows rows={5} />;
+  if (!data?.length || data.every((item) => item.count === 0)) {
+    return <EmptyState icon="fa-face-smile" title="No outstanding invoices" text="There are no open receivables in this currency." />;
+  }
+
+  const maximum = Math.max(...data.map((item) => item.amount), 1);
+  const colors = ['#10b981', '#f59e0b', '#f97316', '#ef4444', '#b91c1c'];
+
+  return (
+    <div className="db-aging-list">
+      {data.map((item, index) => (
+        <div key={item.bracket} className="db-aging-row">
+          <div className="db-aging-meta">
+            <span>{item.label}</span>
+            <strong>{formatShortCurrency(item.amount, currency)}</strong>
           </div>
+          <div className="db-aging-line">
+            <span style={{ width: `${(item.amount / maximum) * 100}%`, background: colors[index] }} />
+          </div>
+          <small>{plural(item.count, 'invoice')}</small>
         </div>
       ))}
     </div>
   );
 };
 
-// ── Dashboard ─────────────────────────────────────────────────────
+const PaymentMethods = ({ data, currency, loading }) => {
+  if (loading) return <SkeletonRows rows={4} />;
+  if (!data?.length) {
+    return <EmptyState icon="fa-wallet" title="No payments collected" text="Recorded payments in this period will appear here." />;
+  }
+
+  const maximum = Math.max(...data.map((item) => item.amount), 1);
+
+  return (
+    <div className="db-payment-methods">
+      {data.map((item) => (
+        <div className="db-method-row" key={item.method}>
+          <div className="db-method-head">
+            <span>{METHOD_LABELS[item.method] || item.method}</span>
+            <strong>{formatShortCurrency(item.amount, currency)}</strong>
+          </div>
+          <div className="db-method-line"><span style={{ width: `${(item.amount / maximum) * 100}%` }} /></div>
+          <small>{plural(item.count, 'payment')}</small>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const Pipeline = ({ data, loading, navigate }) => {
+  const stages = [
+    {
+      title: 'Quotations',
+      icon: 'fa-file-pen',
+      route: '/quotations',
+      accent: 'purple',
+      values: [
+        { label: 'Created', value: data?.quotations?.total },
+        { label: 'Accepted', value: data?.quotations?.accepted },
+        { label: 'Converted', value: data?.quotations?.converted },
+      ],
+    },
+    {
+      title: 'Proformas',
+      icon: 'fa-file-circle-check',
+      route: '/proformas',
+      accent: 'teal',
+      values: [
+        { label: 'Created', value: data?.proformas?.total },
+        { label: 'Approved', value: data?.proformas?.approved },
+        { label: 'Converted', value: data?.proformas?.converted },
+      ],
+    },
+    {
+      title: 'Invoices',
+      icon: 'fa-file-invoice-dollar',
+      route: '/invoices',
+      accent: 'blue',
+      values: [
+        { label: 'Issued', value: data?.invoices?.issued },
+        { label: 'Paid', value: data?.invoices?.paid },
+        { label: 'Open', value: data?.invoices?.open },
+      ],
+    },
+  ];
+
+  return (
+    <div className="db-pipeline">
+      {stages.map((stage, index) => (
+        <React.Fragment key={stage.title}>
+          <button type="button" className={`db-pipeline-stage stage-${stage.accent}`} onClick={() => navigate(stage.route)}>
+            <div className="db-stage-title"><i className={`fas ${stage.icon}`} /> {stage.title}</div>
+            <div className="db-stage-values">
+              {stage.values.map((value) => (
+                <div key={value.label}>
+                  <strong>{loading ? <Skeleton width={25} height={19} /> : (value.value ?? 0)}</strong>
+                  <span>{value.label}</span>
+                </div>
+              ))}
+            </div>
+          </button>
+          {index < stages.length - 1 && <i className="fas fa-chevron-right db-pipeline-arrow" />}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+const AttentionList = ({ attention, currency, loading, navigate }) => {
+  if (loading) return <SkeletonRows rows={5} />;
+
+  const items = [
+    ...(attention?.overdue_invoices || []).map((item) => ({
+      key: `invoice-${item.id}`,
+      icon: 'fa-triangle-exclamation',
+      tone: 'urgent',
+      title: item.invoice_number,
+      description: `${item.client_name} · ${item.days_overdue} day(s) overdue`,
+      amount: formatShortCurrency(item.balance_due, item.currency || currency),
+      route: `/invoices/${item.id}`,
+    })),
+    ...(attention?.expiring_quotations || []).map((item) => ({
+      key: `quotation-${item.id}`,
+      icon: 'fa-file-circle-exclamation',
+      tone: 'warning',
+      title: item.number,
+      description: `${item.client_name} · expires ${formatDate(item.expiry_date)}`,
+      amount: 'Quotation',
+      route: `/quotations/${item.id}`,
+    })),
+    ...(attention?.expiring_proformas || []).map((item) => ({
+      key: `proforma-${item.id}`,
+      icon: 'fa-hourglass-half',
+      tone: 'warning',
+      title: item.number,
+      description: `${item.client_name} · expires ${formatDate(item.expiry_date)}`,
+      amount: 'Proforma',
+      route: `/proformas/${item.id}`,
+    })),
+  ].slice(0, 7);
+
+  if (!items.length) {
+    return <EmptyState icon="fa-circle-check" title="Nothing urgent" text="No overdue invoices or documents expiring within 7 days." />;
+  }
+
+  return (
+    <div className="db-attention-list">
+      {items.map((item) => (
+        <button type="button" key={item.key} className="db-attention-row" onClick={() => navigate(item.route)}>
+          <i className={`fas ${item.icon} attention-${item.tone}`} />
+          <div>
+            <strong>{item.title}</strong>
+            <span>{item.description}</span>
+          </div>
+          <small>{item.amount}</small>
+        </button>
+      ))}
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const [nav, setNav] = useState(false);
-  const { theme } = useThemeStore();
-  const { user } = useAuthStore();
+  const theme = useThemeStore((state) => state.theme);
+  const user = useAuthStore((state) => state.user);
+  const { showToast } = useToastStore();
   const navigate = useNavigate();
-  const { data, loading, error, currency, setCurrency, fetchDashboard } = useDashboardStore();
+  const [maintenance, setMaintenance] = useState(null);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  const [maintenanceError, setMaintenanceError] = useState('');
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    filters,
+    setCurrency,
+    setPeriod,
+    fetchDashboard,
+    refreshDashboard,
+  } = useDashboardStore();
+
   const { meta, kpis, charts, lists } = data;
+  const currency = meta?.currency || filters.currency;
+  const isSuperAdmin = user?.role === 'super_admin';
+  const canViewReports = meta?.can_view_financial_reports ?? ['super_admin', 'admin', 'accounting'].includes(user?.role);
+  const canManageStock = ['super_admin', 'admin'].includes(user?.role);
+  const canCreateDocuments = ['super_admin', 'admin', 'sales'].includes(user?.role);
 
   useEffect(() => {
     document.title = 'Otelex | Dashboard';
     fetchDashboard();
-  }, []);
+  }, [fetchDashboard]);
 
-  const cur = meta?.currency || currency;
-  const isAdmin = user?.role === 'admin';
-  const isAccountant = user?.role === 'accountant';
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+
+    automationService.getDocumentMaintenanceStatus()
+      .then((response) => {
+        setMaintenance(response.data?.data || null);
+        setMaintenanceError('');
+      })
+      .catch((requestError) => {
+        setMaintenanceError(
+          requestError.response?.data?.message || 'Unable to load document-check status.'
+        );
+      });
+  }, [isSuperAdmin]);
+
+  const handleMaintenanceRun = async () => {
+    setMaintenanceLoading(true);
+    setMaintenanceError('');
+
+    try {
+      const response = await automationService.runDocumentMaintenance();
+      const result = response.data?.data || {};
+
+      showToast(
+        `Checks complete: ${result.invoices_marked_overdue || 0} overdue invoice(s), ${result.quotation_expired_count || 0} expired quotation(s), ${result.proforma_expired_count || 0} expired proforma(s), ${result.reminders_sent || 0} reminder(s) sent.`,
+        'success'
+      );
+
+      const statusResponse = await automationService.getDocumentMaintenanceStatus();
+      setMaintenance(statusResponse.data?.data || null);
+      refreshDashboard();
+    } catch (requestError) {
+      const message = requestError.response?.data?.message || 'Document checks could not be completed.';
+      setMaintenanceError(message);
+      showToast(message, 'error');
+    } finally {
+      setMaintenanceLoading(false);
+    }
+  };
+
+  const outstandingRoute = canViewReports ? '/reports/outstanding' : '/invoices';
+  const periodLabel = meta?.period?.label || 'This Month';
 
   const kpiCards = [
     {
-      icon: 'fa-file-invoice-dollar', label: 'Invoiced (This Month)',
-      value: kpis ? fmtShort(kpis.revenue.gross_invoiced_mtd, cur) : null,
-      sub: kpis ? `${kpis.invoices.total_mtd} invoice(s) issued` : null,
-      subIcon: 'fa-file',
-      gradient: ['#1a56db', '#1e3a8a'], glow: 'rgba(26,86,219,0.28)',
-      delay: 0.05, onClick: () => navigate('/invoices'),
+      icon: 'fa-file-invoice-dollar',
+      label: `Invoiced · ${periodLabel}`,
+      value: formatShortCurrency(kpis?.revenue?.gross_invoiced, currency),
+      subText: plural(kpis?.invoices?.issued_count || 0, 'invoice'),
+      change: kpis?.revenue?.invoiced_change_percent,
+      tone: 'primary',
+      route: '/invoices',
     },
     {
-      icon: 'fa-money-bill-trend-up', label: 'Collected (This Month)',
-      value: kpis ? fmtShort(kpis.revenue.collected_mtd, cur) : null,
-      sub: kpis ? `${kpis.revenue.collection_rate}% collection rate` : null,
-      subIcon: 'fa-percent',
-      gradient: ['#10b981', '#059669'], glow: 'rgba(16,185,129,0.28)',
-      delay: 0.10, onClick: () => navigate('/invoices/payments'),
+      icon: 'fa-money-check-dollar',
+      label: `Collected · ${periodLabel}`,
+      value: formatShortCurrency(kpis?.revenue?.collected, currency),
+      subText: `${kpis?.revenue?.collection_rate || 0}% of invoiced value`,
+      change: kpis?.revenue?.collected_change_percent,
+      tone: 'success',
+      route: '/payments',
     },
     {
-      icon: 'fa-clock', label: 'Outstanding',
-      value: kpis ? fmtShort(kpis.revenue.total_outstanding, cur) : null,
-      sub: kpis ? `${kpis.invoices.open_count} open invoice(s)` : null,
-      subIcon: 'fa-file-circle-exclamation',
-      gradient: ['#f59e0b', '#d97706'], glow: 'rgba(245,158,11,0.28)',
-      delay: 0.15, onClick: () => navigate('/reports/outstanding'),
+      icon: 'fa-wallet',
+      label: 'Outstanding Balance',
+      value: formatShortCurrency(kpis?.revenue?.total_outstanding, currency),
+      subText: plural(kpis?.invoices?.open_count || 0, 'open invoice'),
+      change: undefined,
+      tone: 'warning',
+      route: outstandingRoute,
     },
     {
-      icon: 'fa-triangle-exclamation', label: 'Overdue',
-      value: kpis ? fmtShort(kpis.revenue.total_overdue, cur) : null,
-      sub: kpis ? `${kpis.invoices.overdue_count} overdue invoice(s)` : null,
-      subIcon: 'fa-exclamation',
-      gradient: ['#ef4444', '#dc2626'], glow: 'rgba(239,68,68,0.28)',
-      delay: 0.20, onClick: () => navigate('/invoices'),
-    },
-    {
-      icon: 'fa-circle-check', label: 'Paid (This Month)',
-      value: kpis ? String(kpis.invoices.paid_mtd) : null,
-      sub: kpis ? `${kpis.invoices.draft_count} draft(s) pending` : null,
-      subIcon: 'fa-pen',
-      gradient: ['#8b5cf6', '#7c3aed'], glow: 'rgba(139,92,246,0.28)',
-      delay: 0.25, onClick: () => navigate('/invoices'),
+      icon: 'fa-triangle-exclamation',
+      label: 'Overdue Receivables',
+      value: formatShortCurrency(kpis?.revenue?.total_overdue, currency),
+      subText: `${kpis?.revenue?.overdue_ratio || 0}% of outstanding`,
+      change: undefined,
+      tone: 'danger',
+      route: outstandingRoute,
     },
   ];
+
+  const quickActions = canCreateDocuments
+    ? [
+        { label: 'New Invoice', icon: 'fa-file-invoice', route: '/invoices/new' },
+        { label: 'New Quotation', icon: 'fa-file-pen', route: '/quotations/new' },
+        { label: 'New Proforma', icon: 'fa-file-circle-check', route: '/proformas/new' },
+        { label: 'Add Client', icon: 'fa-user-plus', route: '/clients' },
+      ]
+    : [
+        { label: 'Record Payment', icon: 'fa-money-check-dollar', route: '/payments' },
+        { label: 'Sales Report', icon: 'fa-chart-line', route: '/reports/sales' },
+        { label: 'VAT Report', icon: 'fa-percent', route: '/reports/vat' },
+        { label: 'Outstanding', icon: 'fa-clock', route: '/reports/outstanding' },
+      ];
 
   return (
     <div className={`main-container theme-${theme}`}>
       <Header setNav={setNav} nav={nav} />
       <NavBar setNav={setNav} nav={nav} />
 
-      <div className="page-content">
+      <main className="page-content dashboard-page">
         <PageNav pageTitle="Dashboard" links={[{ label: 'Home', to: '/', active: true }]} />
 
-        {/* ── Welcome + Currency ── */}
-        <motion.div
-          className={`welcome-banner theme-${theme}`}
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
+        <motion.section
+          className="db-hero"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32 }}
         >
-          <div className="welcome-text">
-            <h2>Welcome back, <span>{user?.name?.split(' ')[0] || 'there'}</span> 👋</h2>
+          <div className="db-hero-copy">
+            <span className="db-scope-badge"><i className="fas fa-chart-line" /> {meta?.scope_label || 'Business overview'}</span>
+            <h1>Welcome back, <span>{user?.name?.split(' ')[0] || 'there'}</span></h1>
             <p>
-              {meta
-                ? `${new Date().toLocaleString('en', { month: 'long', year: 'numeric' })} · Last updated ${meta.generated_at?.slice(11, 16)}`
-                : 'Loading your dashboard...'}
+              Monitor invoices, collections and urgent follow-ups in one place.
+              <span className="db-updated"> Updated {formatUpdatedTime(meta?.generated_at)}</span>
             </p>
           </div>
-          <div className="welcome-right">
-            <div className="currency-toggle">
-              {['NGN', 'USD'].map((c) => (
-                <button key={c} className={`cur-btn ${currency === c ? 'is-active' : ''}`}
-                  onClick={() => setCurrency(c)} type="button">
-                  {c === 'NGN' ? '₦ NGN' : '$ USD'}
+
+          <div className="db-control-area">
+            <div className="db-toggle" aria-label="Dashboard period">
+              {PERIOD_OPTIONS.map((period) => (
+                <button
+                  key={period.value}
+                  type="button"
+                  className={filters.period === period.value ? 'active' : ''}
+                  onClick={() => setPeriod(period.value)}
+                  disabled={refreshing}
+                >
+                  {period.label}
                 </button>
               ))}
             </div>
-            <div className="welcome-badge"><i className="fas fa-chart-line" /></div>
-          </div>
-        </motion.div>
-
-        {/* ── Error ── */}
-        {error && !loading && (
-          <div className={`db-error theme-${theme}`}>
-            <i className="fas fa-triangle-exclamation" />
-            <span>{error}</span>
-            <button onClick={() => fetchDashboard()} type="button">
-              <i className="fas fa-rotate-right" /> Retry
-            </button>
-          </div>
-        )}
-
-        {/* ── KPI Grid ── */}
-        <div className="kpi-grid">
-          {kpiCards.map((card) => <KpiCard key={card.label} {...card} loading={loading} />)}
-        </div>
-
-        {/* ── Quotation Strip ── */}
-        <motion.div
-          className={`quote-strip theme-${theme}`}
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          transition={{ duration: 0.35, delay: 0.3 }}
-        >
-          {[
-            { label: 'Quotations (Month)', val: kpis?.quotations.total_mtd, icon: 'fa-file-pen', color: '#8b5cf6' },
-            { label: 'Accepted', val: kpis?.quotations.accepted_mtd, icon: 'fa-circle-check', color: '#10b981' },
-            { label: 'Converted', val: kpis?.quotations.converted_mtd, icon: 'fa-arrows-turn-to-dots', color: '#1a56db' },
-            { label: 'Awaiting Response', val: kpis?.quotations.pending_mtd, icon: 'fa-hourglass-half', color: '#f59e0b' },
-          ].map((q) => (
-            <div key={q.label} className="quote-chip">
-              <i className={`fas ${q.icon}`} style={{ color: q.color }} />
-              <span className="quote-chip-val">
-                {loading ? <Skel w={24} h={16} /> : (q.val ?? '—')}
-              </span>
-              <span className="quote-chip-label">{q.label}</span>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* ── Charts Row ── */}
-        <div className="db-charts-grid">
-          <Panel title="Revenue Trend (6 Months)" icon="fa-chart-line" delay={0.15}>
-            {loading
-              ? <div style={{ padding: '8px 0' }}><Skel w="100%" h={160} r={10} /></div>
-              : <RevenueChart trend={charts?.revenue_trend} currency={cur} />
-            }
-          </Panel>
-          <Panel title="Invoice Aging" icon="fa-clock" action="View Report" onAction={() => navigate('/reports/outstanding')} delay={0.2}>
-            {loading ? <SkelRows n={5} /> : <AgingChart aging={charts?.invoice_aging} currency={cur} />}
-          </Panel>
-        </div>
-
-        {/* ── Lower Grid ── */}
-        <div className="db-lower-grid">
-
-          {/* Recent Invoices */}
-          <Panel title="Recent Invoices" icon="fa-file-invoice" action="View all" onAction={() => navigate('/invoices')} delay={0.25}>
-            {loading ? <SkelRows /> :
-              !lists?.recent_invoices?.length ? <Empty icon="fa-file-circle-xmark" text="No invoices yet" /> :
-                <div className="inv-list">
-                  {lists.recent_invoices.map((inv) => (
-                    <div key={inv.id} className="inv-row" onClick={() => navigate(`/invoices/${inv.id}`)}>
-                      <div className="inv-row-left">
-                        <p className="inv-number">{inv.invoice_number}</p>
-                        <p className="inv-client">{inv.client_name}</p>
-                      </div>
-                      <div className="inv-row-right">
-                        <StatusPill status={inv.is_overdue ? 'overdue' : inv.status} />
-                        <p className="inv-amount">{fmt(inv.total_amount, inv.currency)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-            }
-          </Panel>
-
-          {/* Recent Payments */}
-          <Panel title="Recent Payments" icon="fa-money-bill-wave" action="View all" onAction={() => navigate('/invoices/payments')} delay={0.30}>
-            {loading ? <SkelRows /> :
-              !lists?.recent_payments?.length ? <Empty icon="fa-receipt" text="No payments recorded yet" /> :
-                <div className="pay-list">
-                  {lists.recent_payments.map((p) => (
-                    <div key={p.id} className="pay-row">
-                      <div className="pay-row-left">
-                        <div className="pay-icon"><i className="fas fa-money-bill" /></div>
-                        <div>
-                          <p className="pay-client">{p.client_name}</p>
-                          <p className="pay-meta">{p.invoice_number} · {methodLabel[p.payment_method] || p.payment_method}</p>
-                        </div>
-                      </div>
-                      <div className="pay-row-right">
-                        <p className="pay-amount">{fmt(p.amount, p.currency)}</p>
-                        <p className="pay-date">{new Date(p.payment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-            }
-          </Panel>
-
-          {/* Right Column */}
-          <div className="db-right-col">
-
-            {/* Top Products */}
-            <Panel title="Top Products (Month)" icon="fa-trophy" delay={0.35}>
-              {loading ? <SkelRows n={5} /> :
-                !lists?.top_products?.length ? <Empty icon="fa-boxes-stacked" text="No product sales this month" /> :
-                  <div className="top-prod-list">
-                    {lists.top_products.map((p, i) => (
-                      <div key={p.product_id} className="top-prod-row" onClick={() => navigate(`/products/${p.product_id}`)}>
-                        <span className={`top-prod-rank rank-${i + 1}`}>{i + 1}</span>
-                        <div className="top-prod-info">
-                          <p className="top-prod-name">{p.product_name}</p>
-                          <p className="top-prod-sku">{p.sku} · {p.total_quantity} units</p>
-                        </div>
-                        <span className="top-prod-rev">{fmtShort(p.total_revenue, cur)}</span>
-                      </div>
-                    ))}
-                  </div>
-              }
-            </Panel>
-
-            {/* Low Stock (Admin + Accountant) */}
-            {(isAdmin || isAccountant) && (
-              <Panel title="Low Stock Alerts" icon="fa-triangle-exclamation" action="View all" onAction={() => navigate('/products')} delay={0.40}>
-                {loading ? <SkelRows n={4} /> :
-                  !lists?.low_stock_alerts?.length ? <Empty icon="fa-boxes-stacked" text="All stock levels healthy" /> :
-                    <div className="stock-list">
-                      {lists.low_stock_alerts.map((item) => (
-                        <div key={item.product_id} className="stock-row" onClick={() => navigate(`/products/${item.product_id}`)}>
-                          <div className="stock-row-left">
-                            <div className={`stock-dot ${item.alert_type === 'out_of_stock' ? 'dot-out' : 'dot-low'}`} />
-                            <div>
-                              <p className="stock-name">{item.product_name}</p>
-                              <p className="stock-sku">{item.sku}</p>
-                            </div>
-                          </div>
-                          <div className="stock-row-right">
-                            <span className={`stock-qty ${item.alert_type === 'out_of_stock' ? 'qty-out' : 'qty-low'}`}>
-                              {item.stock_quantity} left
-                            </span>
-                            <p className="stock-reorder">Reorder at {item.reorder_level}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                }
-              </Panel>
-            )}
-
-            {/* Quick Actions */}
-            <Panel title="Quick Actions" icon="fa-bolt" delay={0.45}>
-              <div className="quick-action-list">
-                {[
-                  { label: 'New Invoice', icon: 'fa-file-invoice', to: '/invoices/new', g: ['#1a56db', '#1e3a8a'], glow: 'rgba(26,86,219,0.28)' },
-                  { label: 'New Quotation', icon: 'fa-file-pen', to: '/quotations/new', g: ['#8b5cf6', '#7c3aed'], glow: 'rgba(139,92,246,0.25)' },
-                  { label: 'New Proforma', icon: 'fa-file-circle-check', to: '/proformas/new', g: ['#10b981', '#059669'], glow: 'rgba(16,185,129,0.25)' },
-                  { label: 'Add Client', icon: 'fa-user-plus', to: '/clients', g: ['#f59e0b', '#d97706'], glow: 'rgba(245,158,11,0.25)' },
-                  { label: 'Add Product', icon: 'fa-boxes-stacked', to: '/products', g: ['#3b82f6', '#2563eb'], glow: 'rgba(59,130,246,0.25)' },
-                ].map((a) => (
-                  <button key={a.label} className="quick-action-btn" onClick={() => navigate(a.to)} type="button">
-                    <div className="qa-icon" style={{ background: `linear-gradient(135deg, ${a.g[0]}, ${a.g[1]})`, boxShadow: a.glow }}>
-                      <i className={`fas ${a.icon}`} />
-                    </div>
-                    <span>{a.label}</span>
-                    <i className="fas fa-arrow-right qa-arrow" />
+            <div className="db-control-row">
+              <div className="db-toggle db-currency" aria-label="Currency">
+                {['NGN', 'USD'].map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className={filters.currency === item ? 'active' : ''}
+                    onClick={() => setCurrency(item)}
+                    disabled={refreshing}
+                  >
+                    {item === 'NGN' ? '₦ NGN' : '$ USD'}
                   </button>
                 ))}
               </div>
+              <button type="button" className="db-refresh" onClick={refreshDashboard} disabled={refreshing}>
+                <i className={`fas fa-rotate ${refreshing ? 'is-spinning' : ''}`} />
+                {refreshing ? 'Updating' : 'Refresh'}
+              </button>
+            </div>
+          </div>
+        </motion.section>
+
+        {isSuperAdmin && (
+          <motion.section
+            className="db-maintenance"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.32, delay: 0.05 }}
+          >
+            <div className="db-maintenance-icon">
+              <i className="fas fa-arrows-rotate" />
+            </div>
+            <div className="db-maintenance-copy">
+              <h3>Document Checks &amp; Reminders</h3>
+              <p>
+                Mark overdue invoices, expire sent quotations/proformas and send due payment reminders.
+                <span> Last run: {formatRunDateTime(maintenance?.last_run?.completed_at)}</span>
+              </p>
+              {maintenanceError && <small className="db-maintenance-error">{maintenanceError}</small>}
+            </div>
+            <div className="db-maintenance-pending">
+              <div><strong>{maintenance?.pending?.invoices_due_for_overdue || 0}</strong><span>Invoices due</span></div>
+              <div><strong>{maintenance?.pending?.quotations_due_for_expiry || 0}</strong><span>Quotes due</span></div>
+              <div><strong>{maintenance?.pending?.proformas_due_for_expiry || 0}</strong><span>Proformas due</span></div>
+            </div>
+            <button
+              type="button"
+              className="db-maintenance-btn"
+              onClick={handleMaintenanceRun}
+              disabled={maintenanceLoading}
+            >
+              <i className={`fas fa-rotate ${maintenanceLoading ? 'is-spinning' : ''}`} />
+              {maintenanceLoading ? 'Running Checks...' : 'Run Document Checks Now'}
+            </button>
+          </motion.section>
+        )}
+
+        {error && (
+          <div className="db-error">
+            <i className="fas fa-circle-exclamation" />
+            <span>{error}</span>
+            <button type="button" onClick={refreshDashboard}>Try again</button>
+          </div>
+        )}
+
+        <section className="db-kpi-grid">
+          {kpiCards.map((card, index) => (
+            <KpiCard
+              key={card.label}
+              {...card}
+              onClick={() => navigate(card.route)}
+              delay={0.04 + (index * 0.04)}
+              loading={loading}
+            />
+          ))}
+        </section>
+
+        <section className="db-insights-grid">
+          <InsightCard
+            icon="fa-receipt"
+            label="Average Invoice Value"
+            value={formatShortCurrency(kpis?.invoices?.average_invoice_value, currency)}
+            loading={loading}
+          />
+          <InsightCard
+            icon="fa-percent"
+            label={`VAT · ${periodLabel}`}
+            value={formatShortCurrency(kpis?.invoices?.vat_amount, currency)}
+            loading={loading}
+          />
+          <InsightCard
+            icon="fa-money-bill-transfer"
+            label="Payments Recorded"
+            value={kpis?.invoices?.payment_count || 0}
+            loading={loading}
+          />
+          <InsightCard
+            icon="fa-bell"
+            label="Unread Notifications"
+            value={meta?.unread_notifications || 0}
+            loading={loading}
+          />
+        </section>
+
+        <Panel title={`Document Pipeline · ${periodLabel}`} icon="fa-shuffle" className="db-pipeline-panel" delay={0.14}>
+          <Pipeline data={kpis?.pipeline} loading={loading} navigate={navigate} />
+        </Panel>
+
+        <section className="db-chart-grid">
+          <Panel title="Revenue & Collection Trend" icon="fa-chart-column" delay={0.18}>
+            <RevenueChart data={charts?.revenue_trend} currency={currency} loading={loading} />
+          </Panel>
+          <Panel title={`Invoice Status · ${periodLabel}`} icon="fa-chart-pie" delay={0.21}>
+            <StatusDistribution data={charts?.status_distribution} loading={loading} />
+          </Panel>
+        </section>
+
+        <section className="db-work-grid">
+          <Panel
+            title="Receivables Aging"
+            icon="fa-clock-rotate-left"
+            action={canViewReports ? 'View report' : 'View invoices'}
+            onAction={() => navigate(outstandingRoute)}
+            delay={0.24}
+          >
+            <AgingChart data={charts?.invoice_aging} currency={currency} loading={loading} />
+          </Panel>
+
+          <Panel title={`Needs Attention${kpis?.alerts?.follow_up_count ? ` · ${kpis.alerts.follow_up_count}` : ''}`} icon="fa-bell" delay={0.27}>
+            <AttentionList attention={lists?.attention} currency={currency} loading={loading} navigate={navigate} />
+          </Panel>
+
+          <Panel title={`Collections by Method · ${periodLabel}`} icon="fa-credit-card" delay={0.3}>
+            <PaymentMethods data={charts?.payment_methods} currency={currency} loading={loading} />
+          </Panel>
+        </section>
+
+        <section className="db-record-grid">
+          <Panel title="Recent Invoices" icon="fa-file-invoice" action="View all" onAction={() => navigate('/invoices')} delay={0.32}>
+            {loading ? <SkeletonRows rows={5} /> : !lists?.recent_invoices?.length ? (
+              <EmptyState icon="fa-file-circle-plus" title="No invoices yet" text="Your latest invoices will appear here." />
+            ) : (
+              <div className="db-record-list">
+                {lists.recent_invoices.map((invoice) => (
+                  <button type="button" key={invoice.id} className="db-invoice-row" onClick={() => navigate(`/invoices/${invoice.id}`)}>
+                    <div>
+                      <strong>{invoice.invoice_number}</strong>
+                      <span>{invoice.client_name}</span>
+                    </div>
+                    <div className="db-record-right">
+                      <StatusPill status={invoice.is_overdue ? 'overdue' : invoice.status} />
+                      <strong>{formatShortCurrency(invoice.total_amount, invoice.currency)}</strong>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          <Panel title="Recent Payments" icon="fa-money-check-dollar" action="View all" onAction={() => navigate('/payments')} delay={0.35}>
+            {loading ? <SkeletonRows rows={5} /> : !lists?.recent_payments?.length ? (
+              <EmptyState icon="fa-receipt" title="No payments yet" text="Recent client payments will appear here." />
+            ) : (
+              <div className="db-record-list">
+                {lists.recent_payments.map((payment) => (
+                  <button type="button" key={payment.id} className="db-payment-row" onClick={() => navigate(`/invoices/${payment.invoice_id}`)}>
+                    <span className="db-payment-icon"><i className="fas fa-arrow-down" /></span>
+                    <div>
+                      <strong>{payment.client_name}</strong>
+                      <span>{payment.invoice_number} · {METHOD_LABELS[payment.payment_method] || payment.payment_method}</span>
+                    </div>
+                    <div className="db-record-right">
+                      <strong className="db-paid-value">{formatShortCurrency(payment.amount, payment.currency)}</strong>
+                      <span>{formatDate(payment.payment_date)}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          <div className="db-side-stack">
+            <Panel title={`Top Products · ${periodLabel}`} icon="fa-trophy" action={canViewReports ? 'View report' : 'View products'} onAction={() => navigate(canViewReports ? '/reports/top-products' : '/products')} delay={0.38}>
+              {loading ? <SkeletonRows rows={4} /> : !lists?.top_products?.length ? (
+                <EmptyState icon="fa-box-open" title="No product sales" text="Completed invoice lines will appear here." />
+              ) : (
+                <div className="db-top-products">
+                  {lists.top_products.map((product, index) => (
+                    <button type="button" key={product.product_id} onClick={() => navigate(`/products/${product.product_id}`)}>
+                      <span className={`db-rank rank-${index + 1}`}>{index + 1}</span>
+                      <div>
+                        <strong>{product.product_name}</strong>
+                        <span>{product.sku} · {product.total_quantity} units</span>
+                      </div>
+                      <b>{formatShortCurrency(product.total_revenue, currency)}</b>
+                    </button>
+                  ))}
+                </div>
+              )}
             </Panel>
 
+            {canManageStock && (
+              <Panel title={`Stock Alerts${kpis?.alerts?.low_stock_count ? ` · ${kpis.alerts.low_stock_count}` : ''}`} icon="fa-boxes-stacked" action="Products" onAction={() => navigate('/products')} delay={0.41}>
+                {loading ? <SkeletonRows rows={3} /> : !lists?.low_stock_alerts?.length ? (
+                  <EmptyState icon="fa-circle-check" title="Stock levels healthy" />
+                ) : (
+                  <div className="db-stock-list">
+                    {lists.low_stock_alerts.map((product) => (
+                      <button type="button" key={product.product_id} onClick={() => navigate(`/products/${product.product_id}`)}>
+                        <span className={`stock-indicator ${product.alert_type}`} />
+                        <div>
+                          <strong>{product.product_name}</strong>
+                          <span>{product.sku}</span>
+                        </div>
+                        <b>{product.stock_quantity} left</b>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </Panel>
+            )}
           </div>
-        </div>
-      </div>
+        </section>
+
+        <Panel title="Quick Actions" icon="fa-bolt" className="db-actions-panel" delay={0.44}>
+          <div className="db-actions-grid">
+            {quickActions.map((action) => (
+              <button type="button" key={action.label} onClick={() => navigate(action.route)}>
+                <i className={`fas ${action.icon}`} />
+                <span>{action.label}</span>
+                <i className="fas fa-arrow-right" />
+              </button>
+            ))}
+          </div>
+        </Panel>
+      </main>
     </div>
   );
 };

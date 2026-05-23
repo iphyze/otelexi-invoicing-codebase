@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import useProductStore from '../../stores/useProductStore';
 import useThemeStore from '../../stores/useThemeStore';
 import useToastStore from '../../stores/useToastStore';
+import useAuthStore from '../../stores/useAuthStore';
 import SelectInput from '../../components/SelectInput';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import { ProductFormModal } from './ProductModals';
@@ -73,7 +74,7 @@ const SkeletonRow = () => (
 );
 
 // ── Empty State ─────────────────────────────────────────────────
-const EmptyState = ({ onNew, error, onRetry, theme }) => (
+const EmptyState = ({ onNew, error, onRetry, theme, canManage }) => (
   <div className={`pt-empty theme-${theme}`}>
     <div className={`pt-empty-icon ${error ? 'error-icon' : ''}`}>
       <i className={`fas ${error ? 'fa-triangle-exclamation' : 'fa-boxes-stacked'}`} />
@@ -83,7 +84,7 @@ const EmptyState = ({ onNew, error, onRetry, theme }) => (
     <div className="pt-empty-actions">
       {error
         ? <button className="pt-empty-btn primary" onClick={onRetry}><i className="fas fa-rotate-right" /> Retry</button>
-        : <button className="pt-empty-btn primary" onClick={onNew}><i className="fas fa-plus" /> Add New Product</button>
+        : canManage ? <button className="pt-empty-btn primary" onClick={onNew}><i className="fas fa-plus" /> Add New Product</button> : null
       }
     </div>
   </div>
@@ -94,6 +95,9 @@ const ProductTable = () => {
   const { theme } = useThemeStore();
   const navigate = useNavigate();
   const { showToast } = useToastStore();
+  const { user } = useAuthStore();
+  const canManage = ['super_admin', 'admin'].includes(user?.role);
+  const canDelete = user?.role === 'super_admin';
 
   const {
     products, meta, filters, loading, error,
@@ -218,14 +222,16 @@ const ProductTable = () => {
           >
             <i className="fas fa-file-excel" /> Export
           </button>
-          <button className="pt-btn-primary" onClick={() => setModal({ type: 'product', data: null })} type="button">
-            <i className="fas fa-plus" /> New Product
-          </button>
+          {canManage && (
+            <button className="pt-btn-primary" onClick={() => setModal({ type: 'product', data: null })} type="button">
+              <i className="fas fa-plus" /> New Product
+            </button>
+          )}
         </div>
       </div>
 
       {/* ── Bulk Bar ─────────────────────────────────────────── */}
-      {selectedIds.length > 0 && (
+      {selectedIds.length > 0 && canManage && (
         <div className={`pt-bulk-bar theme-${theme}`}>
           <span className="pt-bulk-count"><i className="fas fa-square-check" /> {selectedIds.length} selected</span>
           <div className="pt-bulk-actions">
@@ -235,10 +241,10 @@ const ProductTable = () => {
                 <i className="fas fa-toggle-off" /> Deactivate
               </button>
             )}
-            <button className="pt-bulk-btn danger"
+            {canDelete && <button className="pt-bulk-btn danger"
               onClick={() => setConfirm({ open: true, type: 'delete', ids: selectedIds })} type="button">
               <i className="fas fa-trash" /> Delete
-            </button>
+            </button>}
             <button className="pt-bulk-btn neutral" onClick={clearSelection} type="button">
               <i className="fas fa-xmark" /> Clear
             </button>
@@ -252,12 +258,14 @@ const ProductTable = () => {
           <thead>
             <tr>
               <th className="pt-th pt-th-check">
-                <label className="pt-check-label">
-                  <input type="checkbox" className="pt-check-input"
-                    checked={allSelected}
-                    onChange={() => toggleSelectAll(allIds)} />
-                  <span className="pt-check-box" />
-                </label>
+                {canManage && (
+                  <label className="pt-check-label">
+                    <input type="checkbox" className="pt-check-input"
+                      checked={allSelected}
+                      onChange={() => toggleSelectAll(allIds)} />
+                    <span className="pt-check-box" />
+                  </label>
+                )}
               </th>
               <th className="pt-th sortable" onClick={() => {
                 if (filters.sortBy === 'name') setFilter('sortOrder', filters.sortOrder === 'ASC' ? 'DESC' : 'ASC');
@@ -295,6 +303,7 @@ const ProductTable = () => {
                 <td colSpan={9} style={{ padding: 0, border: 'none' }}>
                   <EmptyState
                     error={error} theme={theme}
+                    canManage={canManage}
                     onNew={() => setModal({ type: 'product', data: null })}
                     onRetry={handleRetry}
                   />
@@ -304,12 +313,14 @@ const ProductTable = () => {
               products.map((product) => (
                 <tr key={product.id} className={`pt-row ${selectedIds.includes(product.id) ? 'is-selected' : ''}`}>
                   <td>
-                    <label className="pt-check-label">
-                      <input type="checkbox" className="pt-check-input"
-                        checked={selectedIds.includes(product.id)}
-                        onChange={() => toggleSelect(product.id)} />
-                      <span className="pt-check-box" />
-                    </label>
+                    {canManage && (
+                      <label className="pt-check-label">
+                        <input type="checkbox" className="pt-check-input"
+                          checked={selectedIds.includes(product.id)}
+                          onChange={() => toggleSelect(product.id)} />
+                        <span className="pt-check-box" />
+                      </label>
+                    )}
                   </td>
                   <td>
                     <div className="pt-product-cell">
@@ -349,20 +360,22 @@ const ProductTable = () => {
                         onClick={() => navigate(`/products/${product.id}`)}>
                         <i className="fas fa-eye" />
                       </button>
-                      <button className="pt-action-btn edit" title="Edit"
+                      {canManage && <button className="pt-action-btn edit" title="Edit"
                         onClick={() => setModal({ type: 'product', data: product })}>
                         <i className="fas fa-pen" />
-                      </button>
-                      {product.is_active === 1 ? (
+                      </button>}
+                      {canManage && product.is_active === 1 && (
                         <button className="pt-action-btn deactivate" title="Deactivate"
                           onClick={() => setConfirm({ open: true, type: 'deactivate', ids: [product.id] })}>
                           <i className="fas fa-toggle-off" />
                         </button>
-                      ) : null}
-                      <button className="pt-action-btn delete" title="Delete"
-                        onClick={() => setConfirm({ open: true, type: 'delete', ids: [product.id] })}>
-                        <i className="fas fa-trash" />
-                      </button>
+                      )}
+                      {canDelete && (
+                        <button className="pt-action-btn delete" title="Delete"
+                          onClick={() => setConfirm({ open: true, type: 'delete', ids: [product.id] })}>
+                          <i className="fas fa-trash" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

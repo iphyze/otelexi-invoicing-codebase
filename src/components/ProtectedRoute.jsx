@@ -1,21 +1,14 @@
-import React, { useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 import useAuthStore from '../stores/useAuthStore';
-import useToastStore from '../stores/useToastStore';
+import SessionLoader from './SessionLoader';
 
 const ProtectedRoute = ({ children }) => {
-  const { token, expiresAt, logout, isAuthenticated } = useAuthStore();
-  const { showToast } = useToastStore();
-  const navigate = useNavigate();
+  const { status, isAuthenticated } = useAuthStore();
 
-  useEffect(() => {
-    // Token exists but has expired
-    if (token && expiresAt && Date.now() >= expiresAt) {
-      logout();
-      showToast('Your session has expired. Please log in again.', 'info');
-      navigate('/login', { replace: true });
-    }
-  }, [token, expiresAt, logout, showToast, navigate]);
+  if (status === 'checking') {
+    return <SessionLoader />;
+  }
 
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;

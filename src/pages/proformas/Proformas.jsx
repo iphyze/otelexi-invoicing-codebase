@@ -130,7 +130,7 @@ const Proformas = () => {
           break;
         case 'send':
           await sendProforma(id);
-          showToast('Proforma marked as sent.', 'success');
+          showToast('Proforma PDF emailed successfully.', 'success');
           break;
         case 'approve':
           await approveProforma(id);
@@ -176,7 +176,7 @@ const Proformas = () => {
 
   const confirmConfig = {
     delete:           { title: 'Delete Proforma(s)',   msg: `Permanently delete ${confirm.ids?.length} draft proforma(s)?`,                   btn: 'Yes, Delete',       variant: 'danger' },
-    send:             { title: 'Send Proforma',         msg: 'Mark this proforma as sent? The client can then approve or reject it.',           btn: 'Send',              variant: 'primary' },
+    send:             { title: 'Email Proforma PDF',    msg: 'Email this proforma as a PDF attachment to the client email on file? It will be marked as sent after successful delivery.', btn: 'Send with PDF', variant: 'primary' },
     approve:          { title: 'Approve Proforma',      msg: 'Mark this proforma as approved? You can then convert it to a final invoice.',     btn: 'Approve',           variant: 'success' },
     'convert-invoice':{ title: 'Convert to Invoice',   msg: 'Convert this approved proforma to a final invoice? Stock deducts on finalization.', btn: 'Convert to Invoice', variant: 'success' },
   };
@@ -383,7 +383,7 @@ const Proformas = () => {
                               <button className="pft-action-btn edit" title="Edit" onClick={() => navigate(`/proformas/${p.id}/edit`)}>
                                 <i className="fas fa-pen" />
                               </button>
-                              <button className="pft-action-btn send" title="Send" onClick={() => setConfirm({ open: true, type: 'send', id: p.id })}>
+                              <button className="pft-action-btn send" title="Email PDF" onClick={() => setConfirm({ open: true, type: 'send', id: p.id })}>
                                 <i className="fas fa-paper-plane" />
                               </button>
                               <button className="pft-action-btn delete" title="Delete" onClick={() => setConfirm({ open: true, type: 'delete', ids: [p.id] })}>

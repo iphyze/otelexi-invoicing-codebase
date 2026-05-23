@@ -18,7 +18,7 @@ const Header = ({ nav, setNav }) => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const dropdownRef = useRef(null);
   const bellRef     = useRef(null);   // passed to NotificationPanel for positioning
-  const isAdmin     = user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'super_admin';
 
   // ── Notification store ─────────────────────────────────────────
   const { unreadCount, panelOpen, togglePanel, startPolling, stopPolling } = useNotificationStore();
@@ -40,20 +40,21 @@ const Header = ({ nav, setNav }) => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setDropdownOpen(false);
     stopPolling();
-    logout();
-    navigate('/login');
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   const getInitials = (name = '') =>
     name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
 
   const roleLabel = {
-    admin:      'Administrator',
-    sales:      'Sales Staff',
-    accountant: 'Accountant',
+    super_admin: 'Super Administrator',
+    admin:       'Administrator',
+    sales:       'Sales Staff',
+    accounting:  'Accounting',
   }[user?.role] || user?.role;
 
   // Badge display: show 99+ when over 99
@@ -132,12 +133,12 @@ const Header = ({ nav, setNav }) => {
                 <i className="fas fa-user-circle" /><span>My Profile</span>
               </NavLink>
 
-              {isAdmin && (
+              {isSuperAdmin && (
                 <NavLink to="/settings/company" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                   <i className="fas fa-gear" /><span>Company Settings</span>
                 </NavLink>
               )}
-              {isAdmin && (
+              {isSuperAdmin && (
                 <NavLink to="/settings/users" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                   <i className="fas fa-users-cog" /><span>Manage Users</span>
                 </NavLink>

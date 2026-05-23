@@ -51,6 +51,12 @@ const usePaymentStore = create(
         return res.data;
       },
 
+      issueReceipt: async (id) => {
+        const res = await paymentService.issueReceipt(id);
+        get().fetchPayments();
+        return res.data;
+      },
+
       deletePayment: async (id) => {
         const res = await paymentService.deletePayment(id);
         get().fetchPayments();

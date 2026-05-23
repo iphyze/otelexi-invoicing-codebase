@@ -132,7 +132,7 @@ const Quotations = () => {
           break;
         case 'send':
           await sendQuotation(id);
-          showToast('Quotation marked as sent.', 'success');
+          showToast('Quotation PDF emailed successfully.', 'success');
           break;
         case 'accept':
           await acceptQuotation(id);
@@ -186,7 +186,7 @@ const Quotations = () => {
 
   const confirmConfig = {
     delete: { title: 'Delete Quotation(s)', msg: `Permanently delete ${confirm.ids?.length} draft quotation(s)?`, btn: 'Yes, Delete', variant: 'danger' },
-    send: { title: 'Send Quotation', msg: 'Mark this quotation as sent? Expiry is 14 days from issue date.', btn: 'Send', variant: 'primary' },
+    send: { title: 'Email Quotation PDF', msg: 'Email this quotation as a PDF attachment to the client email on file? It will be marked as sent after successful delivery.', btn: 'Send with PDF', variant: 'primary' },
     accept: { title: 'Accept Quotation', msg: 'Mark this quotation as accepted? You can then convert it to a proforma or invoice.', btn: 'Accept', variant: 'success' },
     reopen: { title: 'Reopen Quotation', msg: 'Reopen this rejected quotation back to draft for editing?', btn: 'Reopen', variant: 'warning' },
     'convert-proforma': { title: 'Convert to Proforma', msg: 'Convert this accepted quotation to a proforma invoice? The quotation will be marked as converted.', btn: 'Convert to Proforma', variant: 'primary' },
@@ -385,7 +385,7 @@ const Quotations = () => {
                               <button className="qt-action-btn edit" title="Edit" onClick={() => navigate(`/quotations/${q.id}/edit`)}>
                                 <i className="fas fa-pen" />
                               </button>
-                              <button className="qt-action-btn send" title="Send" onClick={() => setConfirm({ open: true, type: 'send', id: q.id })}>
+                              <button className="qt-action-btn send" title="Email PDF" onClick={() => setConfirm({ open: true, type: 'send', id: q.id })}>
                                 <i className="fas fa-paper-plane" />
                               </button>
                               <button className="qt-action-btn delete" title="Delete" onClick={() => setConfirm({ open: true, type: 'delete', ids: [q.id] })}>

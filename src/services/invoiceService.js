@@ -15,6 +15,12 @@ const invoiceService = {
   finalizeInvoice:   (id)            => api.post(`/invoices/${id}/finalize`),
   cancelInvoice:     (id, reason)    => api.post(`/invoices/${id}/cancel`, { reason }),
   markOverdue:       ()              => api.post('/invoices/mark-overdue'),
+  sendOverdueReminder: (id)            => api.post(`/invoices/${id}/send-reminder`),
+
+  // ── Controlled financial adjustments ─────────────────────────
+  createCreditNote: (id, data)          => api.post(`/invoices/${id}/credit-notes`, data),
+  processRefund: (creditNoteId, data)   => api.post(`/credit-notes/${creditNoteId}/refunds`, data),
+  reverseInvoice: (id, reason)          => api.post(`/invoices/${id}/reverse`, { reason }),
 };
 
 export default invoiceService;

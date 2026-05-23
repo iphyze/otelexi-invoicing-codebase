@@ -12,7 +12,7 @@ import useAuthStore from '../../stores/useAuthStore';
 import SelectInput from '../../components/SelectInput';
 import DatePicker from '../../components/DatePicker';
 import ConfirmModal from '../../components/modals/ConfirmModal';
-import CancelInvoiceModal from './CancelInvoiceModal';
+import automationService from '../../services/automationService';
 import './Invoices.css';
 
 const STATUS_META = {
@@ -21,6 +21,8 @@ const STATUS_META = {
   partial:   { label: 'Partial',   cls: 'inv-partial',   icon: 'fa-circle-half-stroke' },
   paid:      { label: 'Paid',      cls: 'inv-paid',      icon: 'fa-circle-check' },
   overdue:   { label: 'Overdue',   cls: 'inv-overdue',   icon: 'fa-triangle-exclamation' },
+  credited:  { label: 'Credited',  cls: 'inv-partial',   icon: 'fa-file-circle-minus' },
+  reversed:  { label: 'Reversed',  cls: 'inv-cancelled', icon: 'fa-rotate-left' },
   cancelled: { label: 'Cancelled', cls: 'inv-cancelled', icon: 'fa-ban' },
 };
 
@@ -49,6 +51,8 @@ const STATUS_OPTS = [
   { value: 'partial',   label: 'Partial',   icon: 'fa-circle-half-stroke' },
   { value: 'paid',      label: 'Paid',      icon: 'fa-circle-check' },
   { value: 'overdue',   label: 'Overdue',   icon: 'fa-triangle-exclamation' },
+  { value: 'credited',  label: 'Credited',  icon: 'fa-file-circle-minus' },
+  { value: 'reversed',  label: 'Reversed',  icon: 'fa-rotate-left' },
   { value: 'cancelled', label: 'Cancelled', icon: 'fa-ban' },
 ];
 
@@ -72,7 +76,7 @@ const SkeletonRow = () => (
   </tr>
 );
 
-const EmptyState = ({ onNew, error, onRetry, theme }) => (
+const EmptyState = ({ onNew, error, onRetry, theme, canCreate }) => (
   <div className={`invt-empty theme-${theme}`}>
     <div className={`invt-empty-icon ${error ? 'error-icon' : ''}`}>
       <i className={`fas ${error ? 'fa-triangle-exclamation' : 'fa-file-invoice'}`} />
@@ -82,7 +86,7 @@ const EmptyState = ({ onNew, error, onRetry, theme }) => (
     <div className="invt-empty-actions">
       {error
         ? <button className="invt-empty-btn primary" onClick={onRetry}><i className="fas fa-rotate-right" /> Retry</button>
-        : <button className="invt-empty-btn primary" onClick={onNew}><i className="fas fa-plus" /> New Invoice</button>
+        : canCreate ? <button className="invt-empty-btn primary" onClick={onNew}><i className="fas fa-plus" /> New Invoice</button> : null
       }
     </div>
   </div>
@@ -98,19 +102,20 @@ const Invoices = () => {
   const navigate = useNavigate();
   const { showToast } = useToastStore();
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'super_admin';
+  const canFinalize = ['super_admin', 'admin'].includes(user?.role);
+  const canCreate = ['super_admin', 'admin', 'sales'].includes(user?.role);
 
   const {
     invoices, meta, filters, loading, error, selectedIds, stats,
     fetchInvoices, setFilter, fetchStats,
     toggleSelect, toggleSelectAll, clearSelection,
-    deleteInvoices, finalizeInvoice, cancelInvoice, markOverdue,
+    deleteInvoices, finalizeInvoice,
     downloadInvoicesExcel,
   } = useInvoiceStore();
 
   const [nav, setNav] = useState(false);
   const [confirm, setConfirm] = useState({ open: false, type: '', id: null, ids: [] });
-  const [cancelModal, setCancelModal] = useState({ open: false, id: null, number: '' });
   const [actionLoading, setActionLoading] = useState(false);
   const [stockErrors, setStockErrors] = useState([]);
   const [searchInput, setSearchInput] = useState(filters.search || '');
@@ -135,10 +140,16 @@ const Invoices = () => {
           await finalizeInvoice(confirm.id);
           showToast('Invoice finalized. Stock deducted and status set to Sent.', 'success');
           break;
-        case 'mark-overdue':
-          const res = await markOverdue();
-          showToast(`Overdue run complete. ${res.data?.marked_overdue || 0} invoice(s) marked overdue.`, 'success');
+        case 'document-maintenance': {
+          const response = await automationService.runDocumentMaintenance();
+          const result = response.data?.data || {};
+          await Promise.all([fetchInvoices(), fetchStats()]);
+          showToast(
+            `Checks complete: ${result.invoices_marked_overdue || 0} overdue invoice(s), ${result.quotation_expired_count || 0} expired quotation(s), ${result.proforma_expired_count || 0} expired proforma(s), ${result.reminders_sent || 0} reminder(s) sent.`,
+            'success'
+          );
           break;
+        }
       }
       setConfirm({ open: false, type: '', id: null, ids: [] });
     } catch (err) {
@@ -152,19 +163,6 @@ const Invoices = () => {
     } finally { setActionLoading(false); }
   };
 
-  const handleCancel = async (reason) => {
-    setActionLoading(true);
-    try {
-      const res = await cancelInvoice(cancelModal.id, reason);
-      showToast('Invoice cancelled.', 'success');
-      if (res.warnings?.length) {
-        res.warnings.forEach((w) => showToast(w, 'warning'));
-      }
-      setCancelModal({ open: false, id: null, number: '' });
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to cancel invoice.', 'error');
-    } finally { setActionLoading(false); }
-  };
 
   const allDraftIds = invoices.filter((inv) => inv.status === 'draft').map((inv) => inv.id);
   const totalPages = meta?.total_pages || 1;
@@ -178,8 +176,8 @@ const Invoices = () => {
 
   const confirmConfig = {
     delete:       { title: 'Delete Invoice(s)',   msg: `Permanently delete ${confirm.ids?.length} draft invoice(s)? This cannot be undone.`,  btn: 'Yes, Delete',  variant: 'danger' },
-    finalize:     { title: 'Finalize Invoice',    msg: 'This will check stock availability, deduct stock, and set the invoice to Sent. Admin-only action.',  btn: 'Finalize & Send',  variant: 'primary' },
-    'mark-overdue': { title: 'Run Overdue Check', msg: 'Mark all past-due sent/partial invoices as overdue and process reminders?',           btn: 'Run Overdue',  variant: 'warning' },
+    finalize:     { title: 'Finalize Invoice',    msg: 'This will check stock availability and finalize the invoice. You can email the PDF from the invoice details page afterwards. Admin-only action.',  btn: 'Finalize Invoice',  variant: 'primary' },
+    'document-maintenance': { title: 'Run Document Checks', msg: 'Mark past-due invoices as overdue, expire sent quotations/proformas and send reminders currently due?', btn: 'Run Checks', variant: 'warning' },
   };
 
   return (
@@ -243,22 +241,24 @@ const Invoices = () => {
             <div className="invt-toolbar-right">
               <SelectInput options={SORT_OPTS}  value={filters.sortBy}  onChange={(v) => setFilter('sortBy', v)}  className="invt-filter-sel" />
               <SelectInput options={LIMIT_OPTS} value={filters.limit}   onChange={(v) => setFilter('limit', Number(v))} className="invt-filter-sel" />
-              {isAdmin && (
-                <button className="invt-btn-overdue" onClick={() => setConfirm({ open: true, type: 'mark-overdue' })} type="button" title="Mark overdue invoices">
-                  <i className="fas fa-triangle-exclamation" /> Overdue Run
+              {isSuperAdmin && (
+                <button className="invt-btn-overdue" onClick={() => setConfirm({ open: true, type: 'document-maintenance' })} type="button" title="Run overdue, expiry and reminder checks">
+                  <i className="fas fa-arrows-rotate" /> Document Checks
                 </button>
               )}
               <button className="invt-btn-dl" onClick={downloadInvoicesExcel} type="button" disabled={!invoices.length} title="Export">
                 <i className="fas fa-file-excel" /> Export
               </button>
-              <button className="invt-btn-primary" onClick={() => navigate('/invoices/new')} type="button">
-                <i className="fas fa-plus" /> New Invoice
-              </button>
+              {canCreate && (
+                <button className="invt-btn-primary" onClick={() => navigate('/invoices/new')} type="button">
+                  <i className="fas fa-plus" /> New Invoice
+                </button>
+              )}
             </div>
           </div>
 
           {/* Bulk bar */}
-          {selectedIds.length > 0 && isAdmin && (
+          {selectedIds.length > 0 && isSuperAdmin && (
             <div className={`invt-bulk-bar theme-${theme}`}>
               <span className="invt-bulk-count"><i className="fas fa-square-check" /> {selectedIds.length} selected</span>
               <div className="invt-bulk-actions">
@@ -278,7 +278,7 @@ const Invoices = () => {
               <thead>
                 <tr>
                   <th className="invt-th invt-th-check">
-                    {isAdmin && (
+                    {isSuperAdmin && (
                       <label className="invt-check-label">
                         <input type="checkbox" className="invt-check-input"
                           checked={selectedIds.length === allDraftIds.length && allDraftIds.length > 0}
@@ -312,14 +312,14 @@ const Invoices = () => {
                 ) : error || invoices.length === 0 ? (
                   <tr>
                     <td colSpan={9} style={{ padding: 0, border: 'none' }}>
-                      <EmptyState error={error} theme={theme} onNew={() => navigate('/invoices/new')} onRetry={fetchInvoices} />
+                      <EmptyState error={error} theme={theme} canCreate={canCreate} onNew={() => navigate('/invoices/new')} onRetry={fetchInvoices} />
                     </td>
                   </tr>
                 ) : (
                   invoices.map((inv) => (
                     <tr key={inv.id} className={`invt-row ${selectedIds.includes(inv.id) ? 'is-selected' : ''} ${inv.is_overdue ? 'is-overdue' : ''}`}>
                       <td>
-                        {isAdmin && inv.status === 'draft' && (
+                        {isSuperAdmin && inv.status === 'draft' && (
                           <label className="invt-check-label">
                             <input type="checkbox" className="invt-check-input"
                               checked={selectedIds.includes(inv.id)} onChange={() => toggleSelect(inv.id)} />
@@ -355,8 +355,8 @@ const Invoices = () => {
                       </td>
                       <td>
                         <div className="invt-amount-cell">
-                          <span className="invt-total">{fmt(inv.total_amount, inv.currency)}</span>
-                          {inv.discount_amount > 0 && <span className="invt-disc">-{fmt(inv.discount_amount, inv.currency)} disc.</span>}
+                          <span className="invt-total">{fmt(inv.adjusted_total ?? inv.total_amount, inv.currency)}</span>
+                          {Number(inv.credited_amount || 0) > 0 ? <span className="invt-disc">-{fmt(inv.credited_amount, inv.currency)} credited</span> : (inv.discount_amount > 0 && <span className="invt-disc">-{fmt(inv.discount_amount, inv.currency)} disc.</span>)}
                         </div>
                       </td>
                       <td>
@@ -375,22 +375,19 @@ const Invoices = () => {
                               <button className="invt-action-btn edit" title="Edit" onClick={() => navigate(`/invoices/${inv.id}/edit`)}>
                                 <i className="fas fa-pen" />
                               </button>
-                              {isAdmin && (
+                              {canFinalize && (
                                 <>
-                                  <button className="invt-action-btn finalize" title="Finalize & Send" onClick={() => setConfirm({ open: true, type: 'finalize', id: inv.id })}>
+                                  <button className="invt-action-btn finalize" title="Finalize Invoice" onClick={() => setConfirm({ open: true, type: 'finalize', id: inv.id })}>
                                     <i className="fas fa-paper-plane" />
                                   </button>
-                                  <button className="invt-action-btn delete" title="Delete" onClick={() => setConfirm({ open: true, type: 'delete', ids: [inv.id] })}>
-                                    <i className="fas fa-trash" />
-                                  </button>
+                                  {isSuperAdmin && (
+                                    <button className="invt-action-btn delete" title="Delete" onClick={() => setConfirm({ open: true, type: 'delete', ids: [inv.id] })}>
+                                      <i className="fas fa-trash" />
+                                    </button>
+                                  )}
                                 </>
                               )}
                             </>
-                          )}
-                          {['sent', 'partial', 'overdue'].includes(inv.status) && isAdmin && (
-                            <button className="invt-action-btn cancel" title="Cancel Invoice" onClick={() => setCancelModal({ open: true, id: inv.id, number: inv.invoice_number })}>
-                              <i className="fas fa-ban" />
-                            </button>
                           )}
                         </div>
                       </td>
@@ -440,14 +437,6 @@ const Invoices = () => {
           ) : null}
         />
       )}
-
-      <CancelInvoiceModal
-        open={cancelModal.open}
-        invoiceNumber={cancelModal.number}
-        onClose={() => setCancelModal({ open: false, id: null, number: '' })}
-        onConfirm={handleCancel}
-        loading={actionLoading}
-      />
     </div>
   );
 };

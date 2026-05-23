@@ -39,13 +39,6 @@ const QuotationPDF = ({ quotation: doc, settings, docType = 'quotation' }) => {
   if (!doc) return null;
   const items = doc.items || [];
 
-  // Settings fallback
-  const bank = {
-    name: settings?.bank_name || 'ABC Bank Limited',
-    accName: settings?.account_name || 'OTELEX LTD',
-    accNum: settings?.account_number || 'XXXXXXXXXXX',
-  };
-
   const company = {
     name: settings?.company_name || 'OTELEX LTD',
     address: settings?.address || '',
@@ -180,20 +173,12 @@ const QuotationPDF = ({ quotation: doc, settings, docType = 'quotation' }) => {
 
           {/* Bottom Split */}
           <View style={S.bottomSection}>
-            <View style={S.bankBox}>
-              <Text style={S.bankHead}>Bank Details</Text>
-              <View style={S.bankRow}>
-                <Text style={S.bankLbl}>Account Name:</Text>
-                <Text>{bank.accName}</Text>
-              </View>
-              <View style={S.bankRow}>
-                <Text style={S.bankLbl}>Account Number:</Text>
-                <Text>{bank.accNum}</Text>
-              </View>
-              <View style={S.bankRow}>
-                <Text style={S.bankLbl}>Bank Name:</Text>
-                <Text>{bank.name}</Text>
-              </View>
+            <View style={S.quoteNotice}>
+              <Text style={S.quoteNoticeHead}>Quotation Only</Text>
+              <Text style={S.quoteNoticeText}>
+                This quotation presents the proposed price and applicable tax only.
+                Payment should be made after an approved proforma invoice or final invoice is issued.
+              </Text>
             </View>
 
             <View style={S.totalsBox}>
@@ -466,7 +451,7 @@ const S = StyleSheet.create({
 
   emptyRow: { paddingVertical: 8.5 },
 
-  // ── Bottom Details (Bank & Totals) ──
+  // ── Bottom Details (Quotation Notice & Totals) ──
   bottomSection: {
     flexDirection: 'row',
     marginTop: 15,
@@ -475,15 +460,24 @@ const S = StyleSheet.create({
     alignItems: 'flex-start'
   },
 
-  bankBox: { width: '50%' },
-  bankHead: {
+  quoteNotice: {
+    width: '50%',
+    backgroundColor: BG_ALT,
+    borderRadius: 4,
+    padding: 10,
+  },
+  quoteNoticeHead: {
     fontSize: 7.5,
     fontFamily: 'Montserrat Semi Bold',
-    marginBottom: 7,
+    marginBottom: 5,
     color: BLUE_MED,
+    textTransform: 'uppercase',
   },
-  bankRow: { flexDirection: 'row', marginBottom: 4, fontSize: 7.5 },
-  bankLbl: { fontFamily: 'Montserrat Semi Bold', width: 80, fontSize: 7.5 },
+  quoteNoticeText: {
+    fontSize: 7.2,
+    color: TEXT_GRAY,
+    lineHeight: 1.65,
+  },
 
   totalsBox: { width: '35%' },
 

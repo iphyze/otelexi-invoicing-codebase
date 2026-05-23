@@ -1,10 +1,14 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import useAuthStore from '../stores/useAuthStore';
+import SessionLoader from './SessionLoader';
 
-// Redirects to dashboard if user is already authenticated
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { status, isAuthenticated } = useAuthStore();
+
+  if (status === 'checking') {
+    return <SessionLoader />;
+  }
 
   if (isAuthenticated()) {
     return <Navigate to="/" replace />;

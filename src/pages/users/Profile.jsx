@@ -1,6 +1,7 @@
 // pages/users/Profile.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import NavBar from '../../components/NavBar';
 import Header from '../../components/Header';
 import PageNav from '../../components/PageNav';
@@ -11,16 +12,18 @@ import useToastStore from '../../stores/useToastStore';
 import './Profile.css';
 
 const ROLE_META = {
+  super_admin: { label: 'Super Administrator', icon: 'fa-crown', color: '#2563eb' },
   admin:      { label: 'Administrator', icon: 'fa-shield-halved', color: '#8b5cf6' },
   sales:      { label: 'Sales Staff',   icon: 'fa-handshake',     color: '#3b82f6' },
-  accountant: { label: 'Accountant',    icon: 'fa-calculator',    color: '#10b981' },
+  accounting: { label: 'Accounting',    icon: 'fa-calculator',    color: '#10b981' },
 };
 
 const Profile = () => {
   const { theme } = useThemeStore();
-  const { user: me, updateUserData } = useAuthStore();
+  const { user: me, logout } = useAuthStore();
   const { showToast } = useToastStore();
   const { updateProfile } = useUserStore();
+  const navigate = useNavigate();
 
   const [nav, setNav] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,9 +59,14 @@ const Profile = () => {
     setSaving(true);
     try {
       const res = await updateProfile({ currentPassword: form.currentPassword, password: form.password });
-      showToast(res.message || 'Password updated successfully.', 'success');
+      showToast(res.message || 'Password updated successfully. Please sign in again.', 'success');
       setFormState({ currentPassword: '', password: '', confirmPassword: '' });
       setErrors({});
+
+      if (res.data?.requires_reauthentication) {
+        await logout({ callApi: false });
+        navigate('/login', { replace: true });
+      }
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to update password.', 'error');
     } finally { setSaving(false); }

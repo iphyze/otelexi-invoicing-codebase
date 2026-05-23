@@ -557,3 +557,49 @@
     }
 
 }
+/* ── Quotation-only commercial notice ────────────────────────────── */
+.pdf-quotation-notice {
+    position: relative;
+    width: 50%;
+    box-sizing: border-box;
+    padding: 14px 15px;
+    border-radius: 8px;
+    border: 1px solid #e5ebf6;
+    background: #f7f9ff;
+}
+
+.theme-dark .pdf-quotation-notice {
+    border-color: #24334e;
+    background: rgba(26, 86, 219, 0.05);
+}
+
+.pdf-quotation-notice-title {
+    margin: 0 0 7px;
+    color: #1e40af;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.theme-dark .pdf-quotation-notice-title {
+    color: #60a5fa;
+}
+
+.pdf-quotation-notice-text {
+    max-width: 360px;
+    margin: 0;
+    color: #66758b;
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.theme-dark .pdf-quotation-notice-text {
+    color: #a3b3c9;
+}
+
+@media (max-width: 760px) {
+    .pdf-quotation-notice {
+        width: 100%;
+    }
+}

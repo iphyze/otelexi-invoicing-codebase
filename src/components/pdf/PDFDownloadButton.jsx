@@ -1,81 +1,152 @@
 // components/pdf/PDFDownloadButton.jsx
-// A single reusable button that wraps @react-pdf/renderer's PDFDownloadLink.
-// Handles async settings loading and shows a loading spinner while PDF is generating.
-//
-// Usage:
-//   <PDFDownloadButton type="invoice"   doc={invoice}   />
-//   <PDFDownloadButton type="quotation" doc={quotation} />
-//   <PDFDownloadButton type="proforma"  doc={proforma}  />
+// Reusable PDF download button for invoices, quotations, proformas and receipts.
+// Generates the PDF on explicit click and starts the browser download reliably.
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import React, { useEffect, useState } from 'react';
+import { pdf } from '@react-pdf/renderer';
 import useSettingsStore from '../../stores/useSettingsStore';
+import useToastStore from '../../stores/useToastStore';
 import InvoicePDF from './InvoicePDF';
 import QuotationPDF from './QuotationPDF';
 import ProformaPDF from './ProformaPDF';
+import ReceiptPDF from './ReceiptPDF';
+import CreditNotePDF from './CreditNotePDF';
 import './PDFDownloadButton.css';
 
-// Map type → PDF document component + file name generator
+const safeFileValue = (value, fallback) =>
+  String(value || fallback).replace(/[^A-Za-z0-9_-]+/g, '_');
+
+// Map type → PDF document component + file name.
 const makeDoc = (type, doc, settings) => {
   switch (type) {
     case 'invoice':
       return {
         component: <InvoicePDF invoice={doc} settings={settings} />,
-        filename: `Otelex_Invoice_${doc?.invoice_number || 'INV'}.pdf`,
+        filename: `Otelex_Invoice_${safeFileValue(doc?.invoice_number, 'INV')}.pdf`,
       };
     case 'quotation':
       return {
         component: <QuotationPDF quotation={doc} settings={settings} docType="quotation" />,
-        filename: `Otelex_Quotation_${doc?.quotation_number || 'QUO'}.pdf`,
+        filename: `Otelex_Quotation_${safeFileValue(doc?.quotation_number, 'QUO')}.pdf`,
       };
     case 'proforma':
       return {
         component: <ProformaPDF quotation={doc} settings={settings} docType="proforma" />,
-        filename: `Otelex_Proforma_${doc?.proforma_number || 'PRO'}.pdf`,
+        filename: `Otelex_Proforma_${safeFileValue(doc?.proforma_number, 'PRO')}.pdf`,
+      };
+    case 'receipt':
+      return {
+        component: <ReceiptPDF receipt={doc} settings={settings} />,
+        filename: `Otelex_Receipt_${safeFileValue(doc?.receipt_number, 'RCT')}.pdf`,
+      };
+    case 'credit_note':
+      return {
+        component: <CreditNotePDF creditNote={doc} settings={settings} />,
+        filename: `Otelex_Credit_Note_${safeFileValue(doc?.credit_note_number, 'CRN')}.pdf`,
       };
     default:
       return null;
   }
 };
 
+const downloadBlob = (blob, filename) => {
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.style.display = 'none';
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+};
+
 const PDFDownloadButton = ({ type, doc, className = '', label = 'Download PDF' }) => {
   const { settings, fetchSettings } = useSettingsStore();
-  const [ready, setReady] = useState(false);
+  const { showToast } = useToastStore();
 
-  // Load settings once so logo + bank details are available
+  const [ready, setReady] = useState(Boolean(settings));
+  const [generating, setGenerating] = useState(false);
+
   useEffect(() => {
-    if (settings) { setReady(true); return; }
-    fetchSettings().then(() => setReady(true)).catch(() => setReady(true));
-  }, [settings]);
+    let active = true;
 
-  if (!doc || !ready) {
-    return (
-      <button className={`pdf-dl-btn pdf-dl-loading ${className}`} disabled type="button">
-        <span className="pdf-dl-spinner" />
-        {label}
-      </button>
-    );
-  }
+    if (settings) {
+      setReady(true);
+      return () => {
+        active = false;
+      };
+    }
 
-  const { component, filename } = makeDoc(type, doc, settings) || {};
+    Promise.resolve(fetchSettings())
+      .catch(() => null)
+      .finally(() => {
+        if (active) setReady(true);
+      });
 
-  if (!component) return null;
+    return () => {
+      active = false;
+    };
+  }, [settings, fetchSettings]);
+
+  const handleDownload = async () => {
+    if (!doc || !ready || generating) return;
+
+    const pdfDocument = makeDoc(type, doc, settings);
+
+    if (!pdfDocument) {
+      showToast('This PDF type is unavailable.', 'error');
+      return;
+    }
+
+    setGenerating(true);
+
+    try {
+      const blob = await pdf(pdfDocument.component).toBlob();
+
+      if (!blob || blob.size === 0) {
+        throw new Error('Generated PDF was empty.');
+      }
+
+      downloadBlob(blob, pdfDocument.filename);
+    } catch (error) {
+      console.error(`Failed to generate ${type || 'document'} PDF:`, error);
+      showToast(
+        type === 'receipt'
+          ? 'Receipt PDF could not be generated. Please try again.'
+          : type === 'credit_note'
+            ? 'Credit Note PDF could not be generated. Please try again.'
+            : 'PDF could not be generated. Please try again.',
+        'error'
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const unavailable = !doc || !ready;
 
   return (
-    <PDFDownloadLink document={component} fileName={filename}>
-      {({ loading }) => (
-        <button
-          className={`pdf-dl-btn ${loading ? 'pdf-dl-loading' : ''} ${className}`}
-          type="button"
-          disabled={loading}
-        >
-          {loading
-            ? <><span className="pdf-dl-spinner" /> Generating PDF...</>
-            : <><i className="fas fa-file-pdf" /> {label}</>
-          }
-        </button>
+    <button
+      className={`pdf-dl-btn ${(unavailable || generating) ? 'pdf-dl-loading' : ''} ${className}`}
+      type="button"
+      disabled={unavailable || generating}
+      onClick={handleDownload}
+    >
+      {unavailable || generating ? (
+        <>
+          <span className="pdf-dl-spinner" />
+          {generating ? 'Generating PDF...' : label}
+        </>
+      ) : (
+        <>
+          <i className="fas fa-file-pdf" /> {label}
+        </>
       )}
-    </PDFDownloadLink>
+    </button>
   );
 };
 

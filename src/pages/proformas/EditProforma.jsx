@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import NavBar from '../../components/NavBar';
 import Header from '../../components/Header';
 import PageNav from '../../components/PageNav';
+import DocumentFormHero from '../../components/documents/DocumentFormHero';
 import useThemeStore from '../../stores/useThemeStore';
 import useProformaStore from '../../stores/useProformaStore';
 import useToastStore from '../../stores/useToastStore';
@@ -191,6 +192,8 @@ const EditProforma = () => {
             { label: 'Edit', active: true },
           ]}
         />
+
+        <DocumentFormHero type="proforma" mode="edit" documentNumber={proforma?.proforma_number || ''} />
 
         {proforma && (
           <div className="qf-edit-notice">

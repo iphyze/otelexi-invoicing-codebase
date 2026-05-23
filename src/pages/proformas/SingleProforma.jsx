@@ -10,6 +10,7 @@ import useProformaStore from '../../stores/useProformaStore';
 import useToastStore from '../../stores/useToastStore';
 import useAuthStore from '../../stores/useAuthStore';
 import ConfirmModal from '../../components/modals/ConfirmModal';
+import SendToClientModal from '../../components/modals/SendToClientModal';
 import RejectProformaModal from './RejectProformaModal';
 import './SingleProforma.css';
 import PDFDownloadButton from '../../components/pdf/PDFDownloadButton';
@@ -25,7 +26,7 @@ const SingleProforma = () => {
 
   const {
     fetchSingleProforma, selectedProforma: proforma, singleLoading,
-    sendProforma, approveProforma, rejectProforma,
+    approveProforma, rejectProforma,
     deleteProformas, convertToInvoice,
   } = useProformaStore();
 
@@ -35,6 +36,7 @@ const SingleProforma = () => {
   const [confirm, setConfirm] = useState({ open: false, type: '' });
   const [rejectOpen, setRejectOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [sendModalOpen, setSendModalOpen] = useState(false);
 
   useEffect(() => {
     setFetchError(null);
@@ -50,14 +52,13 @@ const SingleProforma = () => {
   const p = proforma;
   const status     = p?.is_expired ? 'expired' : p?.status;
   const statusMeta = STATUS_META[status] || STATUS_META.draft;
-  const isAdmin    = user?.role === 'admin';
+  const isAdmin    = ['super_admin', 'admin'].includes(user?.role);
   const isMine     = p && (user?.id === p.created_by?.id || isAdmin);
 
   const doAction = async (type) => {
     setActionLoading(true);
     try {
       switch (type) {
-        case 'send':    await sendProforma(id);            showToast('Proforma sent.', 'success'); break;
         case 'approve': await approveProforma(id);         showToast('Proforma approved.', 'success'); break;
         case 'delete':
           await deleteProformas([Number(id)]);
@@ -89,7 +90,6 @@ const SingleProforma = () => {
   };
 
   const confirmConfig = {
-    send:             { title: 'Send Proforma',        msg: 'Mark this proforma as sent? The client can then approve or reject it.',           btn: 'Send',              variant: 'primary' },
     approve:          { title: 'Approve Proforma',     msg: 'Mark this proforma as approved? You can then convert it to a final invoice.',     btn: 'Approve',           variant: 'success' },
     delete:           { title: 'Delete Proforma',      msg: 'Permanently delete this draft proforma? This cannot be undone.',                  btn: 'Yes, Delete',       variant: 'danger' },
     'convert-invoice':{ title: 'Convert to Invoice',  msg: 'Convert this approved proforma to a final invoice? Stock deducts on finalization.', btn: 'Convert to Invoice', variant: 'success' },
@@ -166,13 +166,18 @@ const SingleProforma = () => {
                       <button className="sp-act-btn primary" onClick={() => navigate(`/proformas/${id}/edit`)} type="button">
                         <i className="fas fa-pen" /> Edit
                       </button>
-                      <button className="sp-act-btn send" onClick={() => setConfirm({ open: true, type: 'send' })} type="button">
-                        <i className="fas fa-paper-plane" /> Send
+                      <button className="sp-act-btn send" onClick={() => setSendModalOpen(true)} type="button">
+                        <i className="fas fa-paper-plane" /> Email PDF
                       </button>
                       <button className="sp-act-btn danger" onClick={() => setConfirm({ open: true, type: 'delete' })} type="button">
                         <i className="fas fa-trash" />
                       </button>
                     </>
+                  )}
+                  {['sent', 'approved'].includes(p.status) && isMine && (
+                    <button className="sp-act-btn send" onClick={() => setSendModalOpen(true)} type="button">
+                      <i className="fas fa-envelope" /> Email PDF
+                    </button>
                   )}
                   {p.status === 'sent' && !p.is_expired && isMine && (
                     <>
@@ -339,6 +344,18 @@ const SingleProforma = () => {
         onClose={() => setRejectOpen(false)}
         onConfirm={doReject}
         loading={actionLoading}
+      />
+
+      <SendToClientModal
+        open={sendModalOpen}
+        onClose={() => setSendModalOpen(false)}
+        onSent={() => setRetryCount((count) => count + 1)}
+        documentType="proforma"
+        documentNumber={p?.proforma_number}
+        documentId={p?.id}
+        documentData={p}
+        clientName={p?.client?.company_name}
+        clientEmail={p?.client?.email}
       />
     </div>
   );

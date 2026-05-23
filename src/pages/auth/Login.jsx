@@ -1,14 +1,12 @@
-// pages/auth/Login.jsx
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+import AuthShell from '../../components/auth/AuthShell';
 import useAuthStore from '../../stores/useAuthStore';
 import useToastStore from '../../stores/useToastStore';
 import useThemeStore from '../../stores/useThemeStore';
-import LogoLight from '../../assets/images/otelexi/logo-light.png';
-import LogoDark from '../../assets/images/otelexi/logo-dark.png';
 import './Login.css';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -27,16 +25,14 @@ const Login = () => {
   }, []);
 
   const validate = () => {
-    const e = {};
-    if (!form.email.trim())
-      e.email = 'Email address is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      e.email = 'Please enter a valid email address.';
-    if (!form.password)
-      e.password = 'Password is required.';
-    else if (form.password.length < 6)
-      e.password = 'Password must be at least 6 characters.';
-    return e;
+    const nextErrors = {};
+    if (!form.email.trim()) nextErrors.email = 'Email address is required.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) nextErrors.email = 'Please enter a valid email address.';
+
+    if (!form.password) nextErrors.password = 'Password is required.';
+    else if (form.password.length < 6) nextErrors.password = 'Password must be at least 6 characters.';
+
+    return nextErrors;
   };
 
   const handleChange = (e) => {
@@ -47,11 +43,16 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    const nextErrors = validate();
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+
     setLoading(true);
-    const result = await login(form.email, form.password);
+    const result = await login(form.email.trim(), form.password);
     setLoading(false);
+
     if (result.success) {
       showToast('Welcome back!', 'success');
       navigate('/');
@@ -61,95 +62,101 @@ const Login = () => {
   };
 
   return (
-    <div className={`login-root theme-${theme}`}>
-      {/* Background blobs */}
-      <div className="login-bg">
-        <span className="lb lb-1" />
-        <span className="lb lb-2" />
-        <span className="lb lb-3" />
-      </div>
-
-      {/* Card */}
-      <div className="login-card" data-aos="fade-up">
-
-        {/* Brand */}
-        <div className="login-brand">
-          <img
-            src={theme === 'dark' ? LogoDark : LogoLight}
-            alt="Otelex Ltd"
-            className="login-logo-img"
-          />
-          <p className="login-subtitle">Sign in to your account</p>
+    <AuthShell
+      theme={theme}
+      pageKey="login"
+      eyebrow="Secure sign in"
+      title="Welcome back"
+      subtitle="Sign in to manage quotations, proformas, invoices, receipts and business activity with confidence."
+      securityBadges={[
+        { icon: 'fa-lock', label: '256-bit SSL' },
+        { icon: 'fa-cookie-bite', label: 'Secure session cookies' },
+        { icon: 'fa-user-shield', label: 'Role-based access' },
+      ]}
+      sideTitle="Operate your invoicing workflow from a secure, polished environment."
+      sideDescription="Otelex helps your team stay organised and professional with streamlined business documents, secure sessions and dependable financial workflow control."
+    >
+      <form className="auth-form" onSubmit={handleSubmit} noValidate>
+        <div className={`auth-field ${errors.email ? 'has-error' : ''}`}>
+          <label htmlFor="email">Email Address</label>
+          <div className="auth-input-wrap">
+            <i className="fas fa-envelope auth-input-icon" />
+            <input
+              id="email"
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="admin@otelex.com"
+              autoComplete="email"
+              disabled={loading}
+            />
+          </div>
+          {errors.email ? (
+            <span className="auth-field-error">
+              <i className="fas fa-circle-exclamation" />
+              {errors.email}
+            </span>
+          ) : null}
         </div>
 
-        {/* Form */}
-        <form className="login-form" onSubmit={handleSubmit} noValidate>
-
-          {/* Email */}
-          <div className={`login-field ${errors.email ? 'has-error' : ''}`}>
-            <label htmlFor="email">Email Address</label>
-            <div className="login-input-wrap">
-              <i className="fas fa-envelope login-input-icon" />
-              <input
-                id="email" type="email" name="email"
-                value={form.email} onChange={handleChange}
-                placeholder="admin@otelex.com"
-                autoComplete="email" disabled={loading}
-              />
-            </div>
-            {errors.email && (
-              <span className="login-field-error">
-                <i className="fas fa-circle-exclamation" /> {errors.email}
-              </span>
-            )}
+        <div className={`auth-field ${errors.password ? 'has-error' : ''}`}>
+          <label htmlFor="password">Password</label>
+          <div className="auth-input-wrap">
+            <i className="fas fa-lock auth-input-icon" />
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              disabled={loading}
+            />
+            <button
+              type="button"
+              className="auth-toggle-pw"
+              onClick={() => setShowPassword((value) => !value)}
+              tabIndex={-1}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
+            </button>
           </div>
+          {errors.password ? (
+            <span className="auth-field-error">
+              <i className="fas fa-circle-exclamation" />
+              {errors.password}
+            </span>
+          ) : null}
+        </div>
 
-          {/* Password */}
-          <div className={`login-field ${errors.password ? 'has-error' : ''}`}>
-            <label htmlFor="password">Password</label>
-            <div className="login-input-wrap">
-              <i className="fas fa-lock login-input-icon" />
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={form.password} onChange={handleChange}
-                placeholder="Enter your password"
-                autoComplete="current-password" disabled={loading}
-              />
-              <button
-                type="button" className="login-toggle-pw"
-                onClick={() => setShowPassword((v) => !v)} tabIndex={-1}
-              >
-                <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
-              </button>
-            </div>
-            {errors.password && (
-              <span className="login-field-error">
-                <i className="fas fa-circle-exclamation" /> {errors.password}
-              </span>
-            )}
-          </div>
+        <div className="auth-inline-row">
+          <span className="auth-mini-note">
+            <i className="fas fa-shield-halved" aria-hidden="true" />{' '}
+            Session-protected access for authorised users only.
+          </span>
+          <Link to="/forgot-password" className="auth-inline-link">
+            Forgot password?
+          </Link>
+        </div>
 
-          {/* Forgot */}
-          <div className="login-forgot">
-            <a href="/forgot-password">Forgot password?</a>
-          </div>
-
-          {/* Submit */}
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading
-              ? <><span className="login-spinner" /> Signing in...</>
-              : <><i className="fas fa-right-to-bracket" /> Sign In</>
-            }
-          </button>
-        </form>
-
-        <p className="login-footer-text">
-          &copy; {new Date().getFullYear()} Otelex Ltd. All rights reserved.
-        </p>
-      </div>
-    </div>
+        <button type="submit" className="auth-primary-btn" disabled={loading}>
+          {loading ? (
+            <>
+              <span className="auth-spinner" />
+              Signing in...
+            </>
+          ) : (
+            <>
+              <i className="fas fa-right-to-bracket" />
+              Sign In
+            </>
+          )}
+        </button>
+      </form>
+    </AuthShell>
   );
 };
 

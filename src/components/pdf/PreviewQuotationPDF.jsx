@@ -237,22 +237,14 @@ const PreviewQuotationPDF = ({ doc }) => {
       </div>
 
       {/* Totals Section */}
-      <div className='pdf-details-flexbox'>
+      <div className='pdf-details-flexbox pdf-quotation-summary'>
 
-        <div className='pdf-bank-details'>
-          <p className='pdf-bank-details-htext'>Bank Details</p>
-          <div className='pdfd-flex-wrap'>
-            <p className='pdfd-flex-title'>Account Name:</p>
-            <p className='pdfd-flex-text'>{settings?.account_name}</p>
-          </div>
-          <div className='pdfd-flex-wrap'>
-            <p className='pdfd-flex-title'>Account Number:</p>
-            <p className='pdfd-flex-text'>{settings?.account_number}</p>
-          </div>
-          <div className='pdfd-flex-wrap'>
-            <p className='pdfd-flex-title'>Bank Name:</p>
-            <p className='pdfd-flex-text'>{settings?.bank_name}</p>
-          </div>
+        <div className='pdf-quotation-notice'>
+          <p className='pdf-quotation-notice-title'>Quotation Only</p>
+          <p className='pdf-quotation-notice-text'>
+            This quotation presents the proposed price and applicable tax only.
+            Payment should be made after an approved proforma invoice or final invoice is issued.
+          </p>
         </div>
 
         <div className='pdf-total-box'>

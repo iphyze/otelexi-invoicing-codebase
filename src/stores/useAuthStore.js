@@ -1,69 +1,86 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import api from '../services/api';
+import api, {
+  initialiseCsrfToken,
+  registerSessionExpiredHandler,
+  registerSessionRefreshedHandler,
+  setCsrfToken,
+} from '../services/api';
 
-const useAuthStore = create(
-  persist(
-    (set, get) => ({
-      token: null,
-      user: null,
-      expiresAt: null, // Unix ms timestamp when token expires
+const useAuthStore = create((set, get) => ({
+  user: null,
+  status: 'checking',
+  initialized: false,
 
-      login: async (email, password) => {
-        try {
-          const response = await api.post('/auth/login', { email, password });
-          const { status, data } = response.data;
+  initialize: async () => {
+    if (get().initialized) return;
 
-          if (status === 'success') {
-            const { token, expires_in, ...userData } = data;
-            // expires_in is in seconds (e.g. 432000 = 5 days)
-            const expiresAt = Date.now() + expires_in * 1000;
-
-            set({ token, user: userData, expiresAt });
-            return { success: true };
-          }
-
-          return { success: false, error: 'Invalid credentials' };
-        } catch (error) {
-          return {
-            success: false,
-            error: error.response?.data?.message || 'Login failed. Please try again.',
-          };
-        }
-      },
-
-      logout: () => {
-        set({ token: null, user: null, expiresAt: null });
-      },
-
-      // Returns true if a valid, non-expired token exists
-      isAuthenticated: () => {
-        const { token, expiresAt } = get();
-        if (!token || !expiresAt) return false;
-        return Date.now() < expiresAt;
-      },
-
-      // Call on app boot — clears stale session silently
-      init: () => {
-        const { token, expiresAt, logout } = get();
-        if (token && expiresAt && Date.now() >= expiresAt) {
-          logout();
-        }
-      },
-    }),
-    {
-      name: 'auth-storage',
-      // Only persist these keys
-      partialize: (state) => ({
-        token: state.token,
-        user: state.user,
-        expiresAt: state.expiresAt,
-      }),
+    // Remove the legacy persisted JWT left by earlier releases.
+    localStorage.removeItem('auth-storage');
+    set({ status: 'checking' });
+    try {
+      await initialiseCsrfToken();
+      const response = await api.get('/auth/session');
+      set({
+        user: response.data?.data?.user || null,
+        status: 'authenticated',
+        initialized: true,
+      });
+    } catch (error) {
+      set({ user: null, status: 'guest', initialized: true });
     }
-  )
-);
+  },
 
-// Run init on store creation
-useAuthStore.getState().init();
+  login: async (email, password) => {
+    try {
+      const response = await api.post('/auth/login', { email, password }, { skipAuthRefresh: true });
+      const data = response.data?.data || {};
+
+      if (response.data?.status === 'success' && data.user) {
+        setCsrfToken(data.csrf_token);
+        set({ user: data.user, status: 'authenticated', initialized: true });
+        return { success: true };
+      }
+
+      return { success: false, error: 'Invalid credentials.' };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Login failed. Please try again.',
+      };
+    }
+  },
+
+  logout: async ({ callApi = true } = {}) => {
+    if (callApi) {
+      try {
+        await api.post('/auth/logout', {}, { skipAuthRefresh: true });
+      } catch (error) {
+        // Clear local UI state even when the server session already expired.
+      }
+    }
+
+    setCsrfToken(null);
+    set({ user: null, status: 'guest', initialized: true });
+  },
+
+  clearSession: () => {
+    setCsrfToken(null);
+    set({ user: null, status: 'guest', initialized: true });
+  },
+
+  updateUserData: (user) => {
+    if (user) set({ user });
+  },
+
+  isAuthenticated: () => get().status === 'authenticated' && Boolean(get().user),
+}));
+
+registerSessionExpiredHandler(() => {
+  useAuthStore.getState().clearSession();
+});
+
+registerSessionRefreshedHandler((user) => {
+  useAuthStore.getState().updateUserData(user);
+});
 
 export default useAuthStore;

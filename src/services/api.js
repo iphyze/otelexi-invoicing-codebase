@@ -1,62 +1,119 @@
 import axios from 'axios';
-// Import the store to access the logout function
-import useAuthStore from '../stores/useAuthStore'; 
 
 const api = axios.create({
-    // baseURL: 'https://api.otelexi.com/otelex-server/api',
-    baseURL: 'http://localhost/otelex-server/api',
-    headers: {
-        'Content-Type': 'application/json',
-    },
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost/otelex-server/api',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+  },
 });
 
-// Request Interceptor (Attaches token)
-api.interceptors.request.use(
-    (config) => {
-        const raw = localStorage.getItem('auth-storage');
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                const token = parsed?.state?.token;
-                if (token) {
-                    config.headers.Authorization = `Bearer ${token}`;
-                }
-            } catch (e) {
-                // malformed storage — ignore
-                console.error("Storage parse error", e);
-            }
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+let csrfToken = null;
+let refreshPromise = null;
+let onSessionExpired = () => {};
+let onSessionRefreshed = () => {};
 
-// *** NEW: Response Interceptor (Handles Global 401 Errors) ***
-api.interceptors.response.use(
-    (response) => {
-        // Any status code that lie within the range of 2xx cause this function to trigger
-        return response;
-    },
-    (error) => {
-        // Any status codes that falls outside the range of 2xx cause this function to trigger
-        const originalRequest = error.config;
+const AUTH_NO_REFRESH_ENDPOINTS = [
+  '/auth/csrf',
+  '/auth/login',
+  '/auth/logout',
+  '/auth/refresh',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
 
-        // Check for 401 Unauthorized error (Invalid Signature, Expired, etc.)
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            // Optional: Prevent infinite loops if the login request itself fails
-            originalRequest._retry = true; 
+const isStateChangingMethod = (method = 'get') =>
+  ['post', 'put', 'patch', 'delete'].includes(method.toLowerCase());
 
-            // 1. Logout from Zustand (Clears token and localStorage)
-            useAuthStore.getState().logout();
+export const setCsrfToken = (value) => {
+  csrfToken = typeof value === 'string' && value.length > 0 ? value : null;
+};
 
-            // 2. Redirect to Login
-            // We use window.location.href because this interceptor runs outside React components,
-            // so we can't use useNavigate() directly.
-            window.location.href = '/login';
-        }
+export const registerSessionExpiredHandler = (handler) => {
+  onSessionExpired = typeof handler === 'function' ? handler : () => {};
+};
 
-        return Promise.reject(error);
+export const registerSessionRefreshedHandler = (handler) => {
+  onSessionRefreshed = typeof handler === 'function' ? handler : () => {};
+};
+
+export const initialiseCsrfToken = async () => {
+  const response = await api.get('/auth/csrf', { skipAuthRefresh: true });
+  setCsrfToken(response.data?.data?.csrf_token);
+  return csrfToken;
+};
+
+api.interceptors.request.use((config) => {
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    // Let the browser generate the multipart boundary for PDF/logo uploads.
+    // Keeping the instance-level JSON content type would prevent PHP from reading $_FILES.
+    if (typeof config.headers?.delete === 'function') {
+      config.headers.delete('Content-Type');
+    } else if (config.headers) {
+      delete config.headers['Content-Type'];
     }
+  }
+
+  if (isStateChangingMethod(config.method) && csrfToken) {
+    config.headers['X-CSRF-Token'] = csrfToken;
+  }
+
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config || {};
+    const requestUrl = originalRequest.url || '';
+    const shouldSkipRefresh = originalRequest.skipAuthRefresh
+      || AUTH_NO_REFRESH_ENDPOINTS.some((endpoint) => requestUrl.includes(endpoint));
+
+    if (error.response?.status === 419 && !originalRequest._csrfRetry && !requestUrl.includes('/auth/csrf')) {
+      originalRequest._csrfRetry = true;
+      try {
+        await initialiseCsrfToken();
+        return api(originalRequest);
+      } catch (csrfError) {
+        setCsrfToken(null);
+        onSessionExpired();
+        return Promise.reject(csrfError);
+      }
+    }
+
+    if (error.response?.status !== 401 || originalRequest._retry || shouldSkipRefresh) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      if (!csrfToken) {
+        await initialiseCsrfToken();
+      }
+
+      if (!refreshPromise) {
+        refreshPromise = api.post('/auth/refresh', {}, { skipAuthRefresh: true })
+          .then((response) => {
+            const data = response.data?.data || {};
+            setCsrfToken(data.csrf_token);
+            if (data.user) onSessionRefreshed(data.user);
+            return response;
+          })
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
+
+      await refreshPromise;
+      return api(originalRequest);
+    } catch (refreshError) {
+      setCsrfToken(null);
+      onSessionExpired();
+      return Promise.reject(refreshError);
+    }
+  }
 );
 
 export default api;

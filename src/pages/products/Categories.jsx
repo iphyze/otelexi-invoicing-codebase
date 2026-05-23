@@ -6,6 +6,7 @@ import PageNav from '../../components/PageNav';
 import useThemeStore from '../../stores/useThemeStore';
 import useProductStore from '../../stores/useProductStore';
 import useToastStore from '../../stores/useToastStore';
+import useAuthStore from '../../stores/useAuthStore';
 import SelectInput from '../../components/SelectInput';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import { CategoryFormModal } from './ProductModals';
@@ -50,6 +51,8 @@ const EmptyState = ({ onNew, error, onRetry, theme }) => (
 const Categories = () => {
   const { theme } = useThemeStore();
   const { showToast } = useToastStore();
+  const { user } = useAuthStore();
+  const isSuperAdmin = user?.role === 'super_admin';
   const [nav, setNav] = useState(false);
 
   const {
@@ -159,7 +162,7 @@ const Categories = () => {
             </div>
 
             {/* ── Bulk Bar ── */}
-            {selectedCatIds.length > 0 && (
+            {selectedCatIds.length > 0 && isSuperAdmin && (
               <div className={`cat-bulk-bar theme-${theme}`}>
                 <span className="cat-bulk-count"><i className="fas fa-square-check" /> {selectedCatIds.length} selected</span>
                 <div className="cat-bulk-actions">
@@ -250,7 +253,7 @@ const Categories = () => {
                               onClick={() => setModal({ open: true, data: cat })}>
                               <i className="fas fa-pen" />
                             </button>
-                            <button
+                            {isSuperAdmin && <button
                               className="cat-action-btn delete"
                               title={cat.total_product_count > 0 ? 'Cannot delete: has linked products' : 'Delete'}
                               onClick={() => {
@@ -262,7 +265,7 @@ const Categories = () => {
                               }}
                             >
                               <i className="fas fa-trash" />
-                            </button>
+                            </button>}
                           </div>
                         </td>
                       </tr>

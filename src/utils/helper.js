@@ -93,6 +93,8 @@ export const STATUS_META = {
   partial:   { label: 'Partial',   cls: 'pdf-st-partial',   icon: 'fa-circle-half-stroke' },
   paid:      { label: 'Paid',      cls: 'pdf-st-paid',      icon: 'fa-circle-check' },
   overdue:   { label: 'Overdue',   cls: 'pdf-st-overdue',   icon: 'fa-triangle-exclamation' },
+  credited:  { label: 'Credited',  cls: 'pdf-st-partial',   icon: 'fa-file-circle-minus' },
+  reversed:  { label: 'Reversed',  cls: 'pdf-st-cancelled', icon: 'fa-rotate-left' },
   cancelled: { label: 'Cancelled', cls: 'pdf-st-cancelled', icon: 'fa-ban' },
 };
 
@@ -103,6 +105,8 @@ export const PDF_STATUS_META = {
   partial:   { label: 'Partial',   style: 'partialSt', color: '#92400e'},
   paid:      { label: 'Paid',      style: 'paidSt', color: '#047857'},
   overdue:   { label: 'Overdue',   style: 'overdueSt', color: '#b91c1c'},
+  credited:  { label: 'Credited',  style: 'partialSt', color: '#d97706'},
+  reversed:  { label: 'Reversed',  style: 'cancelledSt', color: '#374151'},
   cancelled: { label: 'Cancelled', style: 'cancelledSt', color: '#374151'},
 };
 

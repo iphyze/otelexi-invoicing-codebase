@@ -12,33 +12,62 @@ const EMPTY_DATA = {
 const useDashboardStore = create((set, get) => ({
   data: { ...EMPTY_DATA },
   loading: false,
+  refreshing: false,
   error: null,
-  currency: 'NGN',   // active currency filter
-
-  setCurrency: (currency) => {
-    set({ currency });
-    get().fetchDashboard(currency);
+  filters: {
+    currency: 'NGN',
+    period: 'month',
   },
 
-  fetchDashboard: async (currency) => {
-    const cur = currency || get().currency;
-    set({ loading: true, error: null });
+  setCurrency: (currency) => {
+    set((state) => ({ filters: { ...state.filters, currency } }));
+    get().fetchDashboard({ currency });
+  },
+
+  setPeriod: (period) => {
+    set((state) => ({ filters: { ...state.filters, period } }));
+    get().fetchDashboard({ period });
+  },
+
+  fetchDashboard: async (overrides = {}) => {
+    const params = { ...get().filters, ...overrides };
+    const alreadyLoaded = Boolean(get().data.meta);
+
+    set({
+      loading: !alreadyLoaded,
+      refreshing: alreadyLoaded,
+      error: null,
+    });
+
     try {
-      const res = await api.get('/dashboard', { params: { currency: cur } });
-      set({ data: res.data.data, loading: false });
-    } catch (err) {
+      const response = await api.get('/dashboard', { params });
+      set({
+        data: response.data.data,
+        filters: {
+          currency: response.data.data.meta.currency,
+          period: response.data.data.meta.period.key,
+        },
+        loading: false,
+        refreshing: false,
+      });
+    } catch (error) {
       set({
         loading: false,
-        error: err.response?.data?.message || 'Failed to load dashboard.',
+        refreshing: false,
+        error: error.response?.data?.message || 'Failed to load dashboard.',
       });
     }
   },
 
-  // Convenience selectors (called by components)
-  getMeta: () => get().data.meta,
-  getKpis: () => get().data.kpis,
-  getCharts: () => get().data.charts,
-  getLists: () => get().data.lists,
+  refreshDashboard: () => get().fetchDashboard(),
+
+  resetDashboard: () => set({
+    data: { ...EMPTY_DATA },
+    loading: false,
+    refreshing: false,
+    error: null,
+    filters: { currency: 'NGN', period: 'month' },
+  }),
 }));
 
 export default useDashboardStore;

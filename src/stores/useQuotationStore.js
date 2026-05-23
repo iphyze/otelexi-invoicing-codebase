@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import quotationService from '../services/quotationService';
+import { sendDocumentWithPdf } from '../utils/documentEmail';
 
 const DEFAULT_FILTERS = {
   search: '', status: '', client_id: '',
@@ -96,7 +97,10 @@ const useQuotationStore = create(
 
       // ── Status transitions ─────────────────────────────────────
       sendQuotation: async (id) => {
-        const res = await quotationService.sendQuotation(id);
+        const res = await sendDocumentWithPdf({
+          documentType: 'quotation',
+          documentId: id,
+        });
         get().refreshAfterAction(id);
         return res.data;
       },

@@ -157,7 +157,7 @@ const InvoicePDF = ({ invoice: inv, settings }) => {
             })}
 
             {/* Empty Rows logic to match CSS preview if < 30 items */}
-            {items.length < 30 && [...Array(30 - items.length)].map((_, i) => (
+            {items.length < 8 && [...Array(8 - items.length)].map((_, i) => (
               <View key={`empty-${i}`} style={(items.length + i) % 2 === 0 ? S.tableRow : S.tableRowAlt}>
                 <Text style={[S.tdText, S.emptyRow, S.colSN]}></Text>
                 <Text style={[S.tdTextLeft, S.emptyRow, S.colDesc]}></Text>

@@ -5,9 +5,10 @@ import useThemeStore from '../../stores/useThemeStore';
 import useUserStore from '../../stores/useUserStore';
 
 const ROLE_OPTS = [
-  { value: 'admin',      label: 'Admin',      icon: 'fa-shield-halved', desc: 'Full access to all features and settings.' },
-  { value: 'sales',      label: 'Sales',      icon: 'fa-handshake',     desc: 'Can create quotations, proformas, invoices.' },
-  { value: 'accountant', label: 'Accountant', icon: 'fa-calculator',    desc: 'Can record and view payments.' },
+  { value: 'super_admin', label: 'Super Admin', icon: 'fa-crown', desc: 'Full access, security settings and financial reversals.' },
+  { value: 'admin', label: 'Admin', icon: 'fa-shield-halved', desc: 'Daily operations without user, settings or reversal control.' },
+  { value: 'sales', label: 'Sales', icon: 'fa-handshake', desc: 'Clients and sales document workflows.' },
+  { value: 'accounting', label: 'Accounting', icon: 'fa-calculator', desc: 'Payments, receipts, reminders and reports.' },
 ];
 
 const UserModal = ({ open, user, onClose, onSuccess }) => {

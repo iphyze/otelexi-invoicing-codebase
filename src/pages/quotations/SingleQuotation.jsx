@@ -10,6 +10,7 @@ import useQuotationStore from '../../stores/useQuotationStore';
 import useToastStore from '../../stores/useToastStore';
 import useAuthStore from '../../stores/useAuthStore';
 import ConfirmModal from '../../components/modals/ConfirmModal';
+import SendToClientModal from '../../components/modals/SendToClientModal';
 import RejectModal from './RejectModal';
 import './SingleQuotation.css';
 import PDFDownloadButton from '../../components/pdf/PDFDownloadButton';
@@ -27,7 +28,7 @@ const SingleQuotation = () => {
 
   const {
     fetchSingleQuotation, selectedQuotation: quotation, singleLoading,
-    sendQuotation, acceptQuotation, rejectQuotation,
+    acceptQuotation, rejectQuotation,
     reopenQuotation, deleteQuotations,
     convertToProforma, convertToInvoice,
   } = useQuotationStore();
@@ -38,6 +39,7 @@ const SingleQuotation = () => {
   const [confirm, setConfirm] = useState({ open: false, type: '' });
   const [rejectOpen, setRejectOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [sendModalOpen, setSendModalOpen] = useState(false);
 
   useEffect(() => {
     setFetchError(null);
@@ -53,14 +55,13 @@ const SingleQuotation = () => {
   const q = quotation;
   const status = q?.is_expired ? 'expired' : q?.status;
   const statusMeta = STATUS_META[status] || STATUS_META.draft;
-  const isAdmin  = user?.role === 'admin';
+  const isAdmin  = ['super_admin', 'admin'].includes(user?.role);
   const isMine   = q && (user?.id === q.created_by?.id || isAdmin);
 
   const doAction = async (type, extra) => {
     setActionLoading(true);
     try {
       switch (type) {
-        case 'send':    await sendQuotation(id);          showToast('Quotation sent.', 'success'); break;
         case 'accept':  await acceptQuotation(id);        showToast('Quotation accepted.', 'success'); break;
         case 'reopen':  await reopenQuotation(id);        showToast('Quotation reopened to draft.', 'success'); break;
         case 'delete':
@@ -97,7 +98,6 @@ const SingleQuotation = () => {
   };
 
   const confirmConfig = {
-    send:    { title: 'Send Quotation',          msg: 'Mark this quotation as sent? It will be valid for 14 days.',                  btn: 'Send',              variant: 'primary' },
     accept:  { title: 'Accept Quotation',         msg: 'Accept this quotation? You can then convert it to a proforma or invoice.',    btn: 'Accept',            variant: 'success' },
     reopen:  { title: 'Reopen Quotation',         msg: 'Reopen this rejected quotation back to draft?',                              btn: 'Reopen',            variant: 'warning' },
     delete:  { title: 'Delete Quotation',         msg: 'Permanently delete this draft quotation? This cannot be undone.',            btn: 'Yes, Delete',       variant: 'danger' },
@@ -176,10 +176,15 @@ const SingleQuotation = () => {
                       <button className="sq-act-btn primary" onClick={() => navigate(`/quotations/${id}/edit`)} type="button">
                         <i className="fas fa-pen" /> Edit
                       </button>
-                      <button className="sq-act-btn send" onClick={() => setConfirm({ open: true, type: 'send' })} type="button">
-                        <i className="fas fa-paper-plane" /> Send
+                      <button className="sq-act-btn send" onClick={() => setSendModalOpen(true)} type="button">
+                        <i className="fas fa-paper-plane" /> Email PDF
                       </button>
                     </>
+                  )}
+                  {['sent', 'accepted'].includes(q.status) && isMine && (
+                    <button className="sq-act-btn send" onClick={() => setSendModalOpen(true)} type="button">
+                      <i className="fas fa-envelope" /> Email PDF
+                    </button>
                   )}
                   {q.status === 'sent' && !q.is_expired && isMine && (
                     <>
@@ -385,6 +390,18 @@ const SingleQuotation = () => {
         onClose={() => setRejectOpen(false)}
         onConfirm={doReject}
         loading={actionLoading}
+      />
+
+      <SendToClientModal
+        open={sendModalOpen}
+        onClose={() => setSendModalOpen(false)}
+        onSent={() => setRetryCount((count) => count + 1)}
+        documentType="quotation"
+        documentNumber={q?.quotation_number}
+        documentId={q?.id}
+        documentData={q}
+        clientName={q?.client?.company_name}
+        clientEmail={q?.client?.email}
       />
     </div>
   );

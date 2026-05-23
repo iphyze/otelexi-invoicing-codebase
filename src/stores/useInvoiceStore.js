@@ -23,7 +23,7 @@ const useInvoiceStore = create(
       selectedIds: [],
 
       // ── Stats ──────────────────────────────────────────────────
-      stats: { total: 0, draft: 0, sent: 0, partial: 0, paid: 0, overdue: 0, cancelled: 0 },
+      stats: { total: 0, draft: 0, sent: 0, partial: 0, paid: 0, overdue: 0, credited: 0, reversed: 0, cancelled: 0 },
 
       // ── Filters ────────────────────────────────────────────────
       setFilter: (key, value) =>
@@ -48,7 +48,7 @@ const useInvoiceStore = create(
       // ── Stats ──────────────────────────────────────────────────
       fetchStats: async () => {
         try {
-          const statuses = ['draft', 'sent', 'partial', 'paid', 'overdue', 'cancelled'];
+          const statuses = ['draft', 'sent', 'partial', 'paid', 'overdue', 'credited', 'reversed', 'cancelled'];
           const results = await Promise.all(
             statuses.map((s) => invoiceService.getInvoices({ status: s, limit: 1, page: 1 }))
           );
@@ -108,6 +108,26 @@ const useInvoiceStore = create(
         get().fetchInvoices();
         return res.data;
       },
+      sendOverdueReminder: async (id) => {
+        const res = await invoiceService.sendOverdueReminder(id);
+        get().refreshAfterAction(id);
+        return res.data;
+      },
+      createCreditNote: async (id, payload) => {
+        const res = await invoiceService.createCreditNote(id, payload);
+        get().refreshAfterAction(id);
+        return res.data;
+      },
+      processRefund: async (creditNoteId, payload, invoiceId) => {
+        const res = await invoiceService.processRefund(creditNoteId, payload);
+        if (invoiceId) get().refreshAfterAction(invoiceId);
+        return res.data;
+      },
+      reverseInvoice: async (id, reason) => {
+        const res = await invoiceService.reverseInvoice(id, reason);
+        get().refreshAfterAction(id);
+        return res.data;
+      },
 
       refreshAfterAction: (id) => {
         get().fetchSingleInvoice(id).catch(() => {});
@@ -136,8 +156,12 @@ const useInvoiceStore = create(
           'Issue Date':    inv.issue_date,
           'Due Date':      inv.due_date,
           'Currency':      inv.currency,
-          'Total':         inv.total_amount,
+          'Original Total': inv.total_amount,
+          'Credited':      inv.credited_amount || 0,
+          'Adjusted Total': inv.adjusted_total ?? inv.total_amount,
           'Paid':          inv.amount_paid,
+          'Refunded':      inv.refunded_amount || 0,
+          'Net Paid':      (Number(inv.amount_paid || 0) - Number(inv.refunded_amount || 0)),
           'Balance Due':   inv.balance_due,
           'Payment Terms': inv.payment_terms,
           'Status':        inv.status,

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import NavBar from '../../components/NavBar';
 import Header from '../../components/Header';
 import PageNav from '../../components/PageNav';
+import DocumentFormHero from '../../components/documents/DocumentFormHero';
 import useThemeStore from '../../stores/useThemeStore';
 import useQuotationStore from '../../stores/useQuotationStore';
 import useToastStore from '../../stores/useToastStore';
@@ -137,6 +138,8 @@ const CreateQuotation = () => {
             { label: 'New Quotation', active: true },
           ]}
         />
+
+        <DocumentFormHero type="quotation" mode="create" />
 
         <div className="qf-layout">
 

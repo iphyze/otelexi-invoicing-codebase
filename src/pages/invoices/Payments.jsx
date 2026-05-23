@@ -41,7 +41,7 @@ const METHOD_ICONS = {
 };
 const STATUS_CLS = {
   draft: 'pm-st-draft', sent: 'pm-st-sent', partial: 'pm-st-partial',
-  paid: 'pm-st-paid', overdue: 'pm-st-overdue', cancelled: 'pm-st-cancelled',
+  paid: 'pm-st-paid', overdue: 'pm-st-overdue', credited: 'pm-st-partial', reversed: 'pm-st-cancelled', cancelled: 'pm-st-cancelled',
 };
 
 const fmt = (n, cur = 'NGN') => {
@@ -49,9 +49,9 @@ const fmt = (n, cur = 'NGN') => {
   return sym + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
 };
 
-const SkeletonRow = () => (
+const SkeletonRow = ({ columns = 7 }) => (
   <tr className="pmt-skel-row">
-    {[...Array(7)].map((_, i) => <td key={i}><div className="pmt-skel-cell" /></td>)}
+    {Array.from({ length: columns }).map((_, i) => <td key={i}><div className="pmt-skel-cell" /></td>)}
   </tr>
 );
 
@@ -60,7 +60,7 @@ const Payments = () => {
   const navigate  = useNavigate();
   const { showToast } = useToastStore();
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'super_admin';
 
   const { payments, meta, filters, loading, error, fetchPayments, setFilter, deletePayment, downloadPaymentsExcel } = usePaymentStore();
 
@@ -102,8 +102,8 @@ const Payments = () => {
 
       <div className="page-content">
         <PageNav
-          pageTitle="Payment History"
-          links={[{ label: 'Dashboard', to: '/' }, { label: 'Invoices', to: '/invoices' }, { label: 'Payments', active: true }]}
+          pageTitle="Payments & Receipts"
+          links={[{ label: 'Dashboard', to: '/' }, { label: 'Payments & Receipts', active: true }]}
         />
 
         <div className={`pmt-wrapper theme-${theme}`}>
@@ -149,15 +149,15 @@ const Payments = () => {
                   }}>Amount <i className={`fas fa-sort${filters.sortBy === 'amount' ? (filters.sortOrder === 'ASC' ? '-up' : '-down') : ''} pmt-sort-icon`} /></th>
                   <th className="pmt-th">Invoice Status</th>
                   <th className="pmt-th">Recorded By</th>
-                  {isAdmin && <th className="pmt-th pmt-th-actions">Actions</th>}
+                  {isSuperAdmin && <th className="pmt-th pmt-th-actions">Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
+                  [...Array(5)].map((_, i) => <SkeletonRow key={i} columns={isSuperAdmin ? 8 : 7} />)
                 ) : error || !payments.length ? (
                   <tr>
-                    <td colSpan={isAdmin ? 8 : 7} style={{ padding: 0, border: 'none' }}>
+                    <td colSpan={isSuperAdmin ? 8 : 7} style={{ padding: 0, border: 'none' }}>
                       <div className={`pmt-empty theme-${theme}`}>
                         <div className={`pmt-empty-icon ${error ? 'error-icon' : ''}`}>
                           <i className={`fas ${error ? 'fa-triangle-exclamation' : 'fa-money-bill-slash'}`} />
@@ -180,6 +180,7 @@ const Payments = () => {
                           {pmt.invoice_number}
                         </button>
                         {pmt.reference && <div className="pmt-ref"><i className="fas fa-hashtag" /> {pmt.reference}</div>}
+                        {pmt.receipt && <div className="pmt-receipt-ref"><i className="fas fa-receipt" /> {pmt.receipt.receipt_number}</div>}
                       </td>
                       <td><span className="pmt-client">{pmt.client_name}</span></td>
                       <td>
@@ -198,7 +199,7 @@ const Payments = () => {
                         </span>
                       </td>
                       <td><span className="pmt-by">{pmt.recorded_by_name}</span></td>
-                      {isAdmin && (
+                      {isSuperAdmin && (
                         <td>
                           <button className="pmt-action-btn reverse" title="Reverse payment"
                             onClick={() => setConfirm({ open: true, id: pmt.id, amount: fmt(pmt.amount, pmt.currency) })}

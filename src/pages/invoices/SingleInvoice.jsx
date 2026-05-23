@@ -11,12 +11,16 @@ import usePaymentStore from '../../stores/usePaymentStore';
 import useToastStore from '../../stores/useToastStore';
 import useAuthStore from '../../stores/useAuthStore';
 import ConfirmModal from '../../components/modals/ConfirmModal';
-import CancelInvoiceModal from './CancelInvoiceModal';
 import RecordPaymentModal from './RecordPaymentModal';
+import CreditNoteModal from './CreditNoteModal';
+import RefundModal from './RefundModal';
+import ReverseInvoiceModal from './ReverseInvoiceModal';
 import './SingleInvoice.css';
+import './FinancialAdjustments.css';
 import PDFDownloadButton from '../../components/pdf/PDFDownloadButton';
 import { formatCurrencyDecimals, STATUS_META } from '../../utils/helper';
 import Skeleton from '../../components/Sekeleton';
+import SendToClientModal from '../../components/modals/SendToClientModal';
 
 const METHOD_ICONS = {
   bank_transfer: 'fa-building-columns',
@@ -34,20 +38,38 @@ const SingleInvoice = () => {
   const { theme } = useThemeStore();
   const { showToast } = useToastStore();
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
-  const canRecordPayment = ['admin', 'accountant'].includes(user?.role);
+  const isSuperAdmin = user?.role === 'super_admin';
+  const canFinalizeInvoice = ['super_admin', 'admin'].includes(user?.role);
+  const canRecordPayment = ['super_admin', 'admin', 'accounting'].includes(user?.role);
+  const canEmailInvoice = ['super_admin', 'admin', 'accounting'].includes(user?.role);
+  const canSendReminder = ['super_admin', 'admin', 'accounting'].includes(user?.role);
 
-  const { fetchSingleInvoice, selectedInvoice: invoice, singleLoading, finalizeInvoice, cancelInvoice, deleteInvoices } = useInvoiceStore();
-  const { recordPayment, deletePayment } = usePaymentStore();
+  const {
+    fetchSingleInvoice,
+    selectedInvoice: invoice,
+    singleLoading,
+    finalizeInvoice,
+    deleteInvoices,
+    sendOverdueReminder,
+    createCreditNote,
+    processRefund,
+    reverseInvoice,
+  } = useInvoiceStore();
+  const { recordPayment, issueReceipt, deletePayment } = usePaymentStore();
 
   const [nav, setNav] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [fetchError, setFetchError] = useState(null);
   const [confirm, setConfirm] = useState({ open: false, type: '', id: null });
-  const [cancelOpen, setCancelOpen] = useState(false);
+  const [creditNoteOpen, setCreditNoteOpen] = useState(false);
+  const [refundCreditNote, setRefundCreditNote] = useState(null);
+  const [creditNoteToEmail, setCreditNoteToEmail] = useState(null);
+  const [reverseOpen, setReverseOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [stockErrors, setStockErrors] = useState([]);
+  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [receiptToEmail, setReceiptToEmail] = useState(null);
 
   useEffect(() => {
     setFetchError(null);
@@ -72,7 +94,7 @@ const SingleInvoice = () => {
       switch (type) {
         case 'finalize':
           await finalizeInvoice(id);
-          showToast('Invoice finalized. Stock deducted and status set to Sent.', 'success');
+          showToast('Invoice finalized. You can now email the PDF to the client.', 'success');
           break;
         case 'delete':
           await deleteInvoices([Number(id)]);
@@ -83,6 +105,16 @@ const SingleInvoice = () => {
           await deletePayment(confirm.id);
           showToast('Payment reversed successfully.', 'success');
           break;
+        case 'issue-receipt': {
+          const response = await issueReceipt(confirm.id);
+          showToast(response.message || 'Receipt issued successfully.', 'success');
+          break;
+        }
+        case 'send-reminder': {
+          const response = await sendOverdueReminder(Number(id));
+          showToast(response.message || 'Payment reminder sent successfully.', 'success');
+          break;
+        }
       }
       setConfirm({ open: false, type: '', id: null });
       setRetryCount((c) => c + 1);
@@ -96,18 +128,6 @@ const SingleInvoice = () => {
     } finally { setActionLoading(false); }
   };
 
-  const doCancel = async (reason) => {
-    setActionLoading(true);
-    try {
-      const res = await cancelInvoice(id, reason);
-      showToast('Invoice cancelled.', 'success');
-      if (res.warnings?.length) res.warnings.forEach((w) => showToast(w, 'warning'));
-      setCancelOpen(false);
-      setRetryCount((c) => c + 1);
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to cancel.', 'error');
-    } finally { setActionLoading(false); }
-  };
 
   const doRecordPayment = async (payload) => {
     setActionLoading(true);
@@ -121,14 +141,64 @@ const SingleInvoice = () => {
     } finally { setActionLoading(false); }
   };
 
-  const confirmConfig = {
-    finalize:       { title: 'Finalize Invoice',   msg: 'Check stock, deduct inventory and set invoice to Sent. This is an Admin-only action and cannot be undone.',  btn: 'Finalize & Send', variant: 'primary' },
-    delete:         { title: 'Delete Invoice',     msg: 'Permanently delete this draft invoice? This cannot be undone.',                                               btn: 'Yes, Delete',     variant: 'danger' },
-    'delete-payment': { title: 'Reverse Payment',  msg: 'Permanently reverse this payment and restore the invoice balance? This cannot be undone.',                   btn: 'Yes, Reverse',    variant: 'danger' },
+  const doCreateCreditNote = async (payload) => {
+    setActionLoading(true);
+    try {
+      const response = await createCreditNote(Number(id), payload);
+      showToast(response.message || 'Credit note issued successfully.', 'success');
+      setCreditNoteOpen(false);
+      setRetryCount((count) => count + 1);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Credit note could not be issued.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  // Progress bar for payments
-  const paidPct = inv ? Math.min(100, (inv.amount_paid / inv.total_amount) * 100) : 0;
+  const doProcessRefund = async (payload) => {
+    if (!refundCreditNote) return;
+    setActionLoading(true);
+    try {
+      const response = await processRefund(refundCreditNote.id, payload, Number(id));
+      showToast(response.message || 'Refund recorded successfully.', 'success');
+      setRefundCreditNote(null);
+      setRetryCount((count) => count + 1);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Refund could not be processed.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const doReverseInvoice = async (reason) => {
+    setActionLoading(true);
+    try {
+      const response = await reverseInvoice(Number(id), reason);
+      showToast(response.message || 'Invoice reversed successfully.', 'success');
+      setReverseOpen(false);
+      setRetryCount((count) => count + 1);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Invoice could not be reversed.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmConfig = {
+    finalize:       { title: 'Finalize Invoice',   msg: 'Check stock, deduct inventory and finalize this invoice. Once finalized, it can be emailed to the client with its PDF attachment.',  btn: 'Finalize Invoice', variant: 'primary' },
+    delete:         { title: 'Delete Invoice',     msg: 'Permanently delete this draft invoice? This cannot be undone.',                                               btn: 'Yes, Delete',     variant: 'danger' },
+    'delete-payment': { title: 'Reverse Payment',  msg: 'Permanently reverse this payment and restore the invoice balance? This cannot be undone.',                   btn: 'Yes, Reverse',    variant: 'danger' },
+    'issue-receipt': { title: 'Issue Payment Receipt', msg: 'Generate an official receipt for this recorded payment? Once issued, the payment can no longer be directly reversed.', btn: 'Issue Receipt', variant: 'primary' },
+    'send-reminder':  { title: 'Send Payment Reminder', msg: 'Send an overdue payment reminder email to the client now? Only one reminder attempt is allowed per invoice per day.', btn: 'Send Reminder', variant: 'warning' },
+  };
+
+  // Progress bar reflects financial adjustments and refunds.
+  const adjustedTotal = Number(inv?.adjusted_total ?? inv?.total_amount ?? 0);
+  const netPaid = Number(inv?.net_paid ?? (Number(inv?.amount_paid || 0) - Number(inv?.refunded_amount || 0)));
+  const paidPct = inv && adjustedTotal > 0 ? Math.min(100, (netPaid / adjustedTotal) * 100) : 0;
+  const creditableAmount = Math.max(0, adjustedTotal);
+  const canIssueCreditNote = isSuperAdmin && inv && !['draft', 'cancelled', 'reversed', 'credited'].includes(inv.status) && creditableAmount > 0;
+  const canReverseFinalInvoice = isSuperAdmin && inv && ['sent', 'overdue'].includes(inv.status) && Number(inv.amount_paid || 0) === 0 && Number(inv.credited_amount || 0) === 0;
 
   return (
     <div className={`main-container theme-${theme}`}>
@@ -181,16 +251,16 @@ const SingleInvoice = () => {
               <div className="sinv-hero-actions">
                 {/* ── PDF Download — always visible when invoice is loaded ── */}
                 {/* <PDFDownloadButton type="invoice" doc={inv} label="Download PDF"/> */}
-                
+
                 <button className='pdf-dl-btn' type="button" onClick={() => navigate(`/invoices/${id}/preview`)}><i className="fas fa-file-pdf"/> Preview</button>
 
                 {inv.status === 'draft' && (
                   <>
                     <button className="sinv-act-btn primary" onClick={() => navigate(`/invoices/${id}/edit`)} type="button"><i className="fas fa-pen" /> Edit</button>
-                    {isAdmin && (
+                    {canFinalizeInvoice && (
                       <>
-                        <button className="sinv-act-btn finalize" onClick={() => setConfirm({ open: true, type: 'finalize' })} type="button"><i className="fas fa-paper-plane" /> Finalize & Send</button>
-                        <button className="sinv-act-btn danger"   onClick={() => setConfirm({ open: true, type: 'delete' })} type="button"><i className="fas fa-trash" /></button>
+                        <button className="sinv-act-btn finalize" onClick={() => setConfirm({ open: true, type: 'finalize' })} type="button"><i className="fas fa-paper-plane" /> Finalize Invoice</button>
+                        {isSuperAdmin && <button className="sinv-act-btn danger" onClick={() => setConfirm({ open: true, type: 'delete' })} type="button" title="Delete draft invoice"><i className="fas fa-trash" /></button>}
                       </>
                     )}
                   </>
@@ -201,10 +271,30 @@ const SingleInvoice = () => {
                   </button>
                 )}
 
-                {payableStatuses.includes(inv.status) && isAdmin && (
-                  <button className="sinv-act-btn cancel" onClick={() => setCancelOpen(true)} type="button"><i className="fas fa-ban" /> Cancel</button>
+                {canIssueCreditNote && (
+                  <button className="sinv-act-btn cancel" onClick={() => setCreditNoteOpen(true)} type="button"><i className="fas fa-file-circle-minus" /> Credit Note</button>
                 )}
-                
+
+                {canReverseFinalInvoice && (
+                  <button className="sinv-act-btn danger" onClick={() => setReverseOpen(true)} type="button"><i className="fas fa-rotate-left" /> Reverse Invoice</button>
+                )}
+
+                {canEmailInvoice && !['draft', 'cancelled', 'reversed'].includes(inv.status) && (
+                  <button onClick={() => setSendModalOpen(true)} className="sc-action-btn primary" type="button">
+                    <i className="fas fa-paper-plane" /> Email PDF to Client
+                  </button>
+                )}
+
+                {canSendReminder && inv.status === 'overdue' && Number(inv.balance_due) > 0 && (
+                  <button
+                    className="sinv-act-btn reminder"
+                    onClick={() => setConfirm({ open: true, type: 'send-reminder', id: inv.id })}
+                    type="button"
+                  >
+                    <i className="fas fa-bell" /> Send Reminder
+                  </button>
+                )}
+
                 </div>
             </motion.div>
 
@@ -212,8 +302,8 @@ const SingleInvoice = () => {
             {inv.status !== 'draft' && inv.status !== 'cancelled' && (
               <motion.div className={`sinv-progress-card theme-${theme}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.05 }}>
                 <div className="sinv-progress-labels">
-                  <span className="sinv-progress-paid"><i className="fas fa-check-circle" /> Paid: {formatCurrencyDecimals(inv.amount_paid, inv.currency)}</span>
-                  <span className="sinv-progress-total">Total: {formatCurrencyDecimals(inv.total_amount, inv.currency)}</span>
+                  <span className="sinv-progress-paid"><i className="fas fa-check-circle" /> Net Paid: {formatCurrencyDecimals(netPaid, inv.currency)}</span>
+                  <span className="sinv-progress-total">Adjusted Total: {formatCurrencyDecimals(adjustedTotal, inv.currency)}</span>
                 </div>
                 <div className="sinv-progress-bar-wrap">
                   <div className="sinv-progress-bar" style={{ width: `${paidPct}%`, background: paidPct >= 100 ? 'linear-gradient(90deg,#10b981,#059669)' : 'linear-gradient(90deg,#1a56db,#3b82f6)' }} />
@@ -263,7 +353,10 @@ const SingleInvoice = () => {
                   <div className="sinv-total-divider" />
                   <div className="sinv-total-row sinv-total-grand"><span>Total</span><span>{formatCurrencyDecimals(inv.total_amount, inv.currency)}</span></div>
                   {inv.status !== 'draft' && (<>
-                    <div className="sinv-total-row sinv-paid-row"><span>Amount Paid</span><span className="sinv-paid-val">{formatCurrencyDecimals(inv.amount_paid, inv.currency)}</span></div>
+                    <div className="sinv-total-row sinv-paid-row"><span>Payments Received</span><span className="sinv-paid-val">{formatCurrencyDecimals(inv.amount_paid, inv.currency)}</span></div>
+                    {Number(inv.credited_amount || 0) > 0 && <div className="sinv-total-row"><span>Credit Notes Issued</span><span>- {formatCurrencyDecimals(inv.credited_amount, inv.currency)}</span></div>}
+                    {Number(inv.refunded_amount || 0) > 0 && <div className="sinv-total-row"><span>Refunds Processed</span><span>- {formatCurrencyDecimals(inv.refunded_amount, inv.currency)}</span></div>}
+                    {Number(inv.credited_amount || 0) > 0 && <div className="sinv-total-row"><span>Adjusted Invoice Total</span><span>{formatCurrencyDecimals(adjustedTotal, inv.currency)}</span></div>}
                     <div className="sinv-total-row sinv-total-balance"><span>Balance Due</span><span className={inv.balance_due <= 0 ? 'sinv-bal-zero' : ''}>{formatCurrencyDecimals(inv.balance_due, inv.currency)}</span></div>
                   </>)}
                 </div>
@@ -326,6 +419,109 @@ const SingleInvoice = () => {
               {inv.footer_text && <div className="sinv-footer-text"><i className="fas fa-circle-info" /><p>{inv.footer_text}</p></div>}
             </motion.div>
 
+            {/* ── Financial Adjustments ── */}
+            {inv.status !== 'draft' && (
+              <motion.div className={`sinv-card theme-${theme}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.19 }}>
+                <div className="finadj-toolbar">
+                  <h3 className="sinv-card-title"><i className="fas fa-scale-balanced" /> Credit Notes & Refunds</h3>
+                  {canIssueCreditNote && (
+                    <div className="finadj-toolbar-actions">
+                      <button className="finadj-action credit" type="button" onClick={() => setCreditNoteOpen(true)}><i className="fas fa-file-circle-minus" /> Issue Credit Note</button>
+                    </div>
+                  )}
+                </div>
+                <div className="finadj-summary">
+                  <div className="finadj-summary-item"><span>Original Value</span><strong>{formatCurrencyDecimals(inv.total_amount, inv.currency)}</strong></div>
+                  <div className="finadj-summary-item credit"><span>Credited</span><strong>{formatCurrencyDecimals(inv.credited_amount || 0, inv.currency)}</strong></div>
+                  <div className="finadj-summary-item refund"><span>Refunded</span><strong>{formatCurrencyDecimals(inv.refunded_amount || 0, inv.currency)}</strong></div>
+                  <div className="finadj-summary-item net"><span>Adjusted Total</span><strong>{formatCurrencyDecimals(adjustedTotal, inv.currency)}</strong></div>
+                </div>
+                {!inv.credit_notes?.length && !inv.refunds?.length ? (
+                  <div className="finadj-empty">No credit notes or refunds have been recorded for this invoice.</div>
+                ) : (
+                  <div className="finadj-list">
+                    {(inv.credit_notes || []).map((creditNote) => (
+                      <div key={`credit-${creditNote.id}`} className="finadj-row">
+                        <div className="finadj-icon"><i className="fas fa-file-circle-minus" /></div>
+                        <div className="finadj-detail">
+                          <strong>{creditNote.credit_note_number}</strong>
+                          <p>{creditNote.reason} · Issued by {creditNote.issued_by_name || 'System'} · {new Date(creditNote.issued_at.replace(' ', 'T')).toLocaleDateString('en-GB')}</p>
+                        </div>
+                        <div className="finadj-amount">- {formatCurrencyDecimals(creditNote.amount, inv.currency)}</div>
+                        <div className="finadj-toolbar-actions">
+                          <PDFDownloadButton type="credit_note" doc={{ ...creditNote, invoice: inv, client: inv.client }} label="PDF" className="sinv-receipt-download" />
+                          {isSuperAdmin && (
+                            <button type="button" className="finadj-action email" onClick={() => setCreditNoteToEmail({ ...creditNote, invoice: inv, client: inv.client })}><i className="fas fa-envelope" /> Email</button>
+                          )}
+                          {isSuperAdmin && Number(creditNote.refundable_amount || 0) > 0 && (
+                            <button type="button" className="finadj-action refund" onClick={() => setRefundCreditNote(creditNote)}><i className="fas fa-money-bill-transfer" /> Refund</button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {(inv.refunds || []).map((refund) => (
+                      <div key={`refund-${refund.id}`} className="finadj-row refund">
+                        <div className="finadj-icon"><i className="fas fa-money-bill-transfer" /></div>
+                        <div className="finadj-detail"><strong>{refund.refund_number}</strong><p>Against {refund.credit_note_number} · {String(refund.payment_method).replaceAll('_', ' ')} · {new Date(refund.refund_date).toLocaleDateString('en-GB')}</p></div>
+                        <div className="finadj-amount">- {formatCurrencyDecimals(refund.amount, inv.currency)}</div>
+                        <span className="finadj-pill">{refund.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {inv.status === 'reversed' && (
+                  <div className="finadj-reversal"><i className="fas fa-rotate-left" /><div><strong>Invoice Reversed</strong><p>{inv.reversal_reason} {inv.reversed_by?.name ? `— by ${inv.reversed_by.name}` : ''}</p></div></div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ── Overdue Reminder History ── */}
+            {inv.status !== 'draft' && (inv.status === 'overdue' || (inv.reminder_history?.length || 0) > 0) && (
+              <motion.div className={`sinv-card theme-${theme}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.2 }}>
+                <div className="sinv-payments-header">
+                  <h3 className="sinv-card-title"><i className="fas fa-bell" /> Reminder History ({inv.reminder_history?.length || 0})</h3>
+                  {canSendReminder && inv.status === 'overdue' && Number(inv.balance_due) > 0 && (
+                    <button
+                      className="sinv-add-payment-btn sinv-reminder-send"
+                      onClick={() => setConfirm({ open: true, type: 'send-reminder', id: inv.id })}
+                      type="button"
+                    >
+                      <i className="fas fa-paper-plane" /> Send Reminder
+                    </button>
+                  )}
+                </div>
+                {!inv.reminder_history?.length ? (
+                  <div className="sinv-no-payments">
+                    <i className="fas fa-bell-slash" />
+                    <p>No reminder emails have been sent yet.</p>
+                  </div>
+                ) : (
+                  <div className="sinv-reminder-list">
+                    {inv.reminder_history.map((reminder) => (
+                      <div key={reminder.id} className="sinv-reminder-row">
+                        <span className={`sinv-reminder-status ${reminder.delivery_status}`}>
+                          <i className={`fas ${reminder.delivery_status === 'sent' ? 'fa-check' : reminder.delivery_status === 'failed' ? 'fa-xmark' : 'fa-minus'}`} />
+                        </span>
+                        <div className="sinv-reminder-details">
+                          <div>
+                            <strong>{reminder.reminder_stage >= 3 ? 'Final / Follow-up Reminder' : `Reminder #${reminder.reminder_stage}`}</strong>
+                            <span className={`sinv-reminder-pill ${reminder.delivery_status}`}>{reminder.delivery_status}</span>
+                          </div>
+                          <p>
+                            {reminder.days_overdue} day(s) overdue · {reminder.recipient_email}
+                            {' · '}
+                            {reminder.trigger_source === 'scheduled' ? 'Automated run' : (reminder.sent_by_name || 'Manual send')}
+                          </p>
+                          {reminder.failure_reason && <small>{reminder.failure_reason}</small>}
+                        </div>
+                        <time>{new Date(reminder.attempted_at.replace(' ', 'T')).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
             {/* ── Payment History ── */}
             {inv.status !== 'draft' && (
               <motion.div className={`sinv-card theme-${theme}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.22 }}>
@@ -354,6 +550,9 @@ const SingleInvoice = () => {
                             <span className="sinv-payment-amount">{formatCurrencyDecimals(pmt.amount, inv.currency)}</span>
                             <span className="sinv-payment-method-label">{pmt.payment_method?.replace('_', ' ')}</span>
                             {pmt.reference && <span className="sinv-payment-ref"><i className="fas fa-hashtag" /> {pmt.reference}</span>}
+                            {pmt.receipt && (
+                              <span className="sinv-receipt-tag"><i className="fas fa-receipt" /> {pmt.receipt.receipt_number}</span>
+                            )}
                           </div>
                           <div className="sinv-payment-bottom">
                             <span className="sinv-payment-date">{new Date(pmt.payment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
@@ -361,12 +560,39 @@ const SingleInvoice = () => {
                             {pmt.notes && <span className="sinv-payment-notes">{pmt.notes}</span>}
                           </div>
                         </div>
-                        {isAdmin && (
-                          <button className="sinv-payment-delete" title="Reverse payment" type="button"
-                            onClick={() => setConfirm({ open: true, type: 'delete-payment', id: pmt.id })}>
-                            <i className="fas fa-rotate-left" />
-                          </button>
-                        )}
+                        <div className="sinv-receipt-actions">
+                          {pmt.receipt ? (
+                            <>
+                              <PDFDownloadButton type="receipt" doc={pmt.receipt} label="Receipt PDF" className="sinv-receipt-download" />
+                              {canRecordPayment && (
+                                <button
+                                  className="sinv-receipt-email"
+                                  type="button"
+                                  title="Email receipt to client"
+                                  onClick={() => setReceiptToEmail(pmt.receipt)}
+                                >
+                                  <i className="fas fa-envelope" /> Email
+                                </button>
+                              )}
+                            </>
+                          ) : canRecordPayment ? (
+                            <button
+                              className="sinv-receipt-issue"
+                              type="button"
+                              onClick={() => setConfirm({ open: true, type: 'issue-receipt', id: pmt.id })}
+                            >
+                              <i className="fas fa-receipt" /> Issue Receipt
+                            </button>
+                          ) : (
+                            <span className="sinv-receipt-pending">No receipt issued</span>
+                          )}
+                          {isSuperAdmin && !pmt.receipt && (
+                            <button className="sinv-payment-delete" title="Reverse payment" type="button"
+                              onClick={() => setConfirm({ open: true, type: 'delete-payment', id: pmt.id })}>
+                              <i className="fas fa-rotate-left" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -397,11 +623,50 @@ const SingleInvoice = () => {
         />
       )}
 
-      <CancelInvoiceModal open={cancelOpen} invoiceNumber={inv?.invoice_number}
-        onClose={() => setCancelOpen(false)} onConfirm={doCancel} loading={actionLoading} />
+      <CreditNoteModal open={creditNoteOpen} invoice={inv} onClose={() => setCreditNoteOpen(false)} onConfirm={doCreateCreditNote} loading={actionLoading} />
+
+      <RefundModal open={Boolean(refundCreditNote)} creditNote={refundCreditNote} invoice={inv} onClose={() => setRefundCreditNote(null)} onConfirm={doProcessRefund} loading={actionLoading} />
+
+      <ReverseInvoiceModal open={reverseOpen} invoiceNumber={inv?.invoice_number} onClose={() => setReverseOpen(false)} onConfirm={doReverseInvoice} loading={actionLoading} />
 
       <RecordPaymentModal open={paymentOpen} invoice={inv}
         onClose={() => setPaymentOpen(false)} onConfirm={doRecordPayment} loading={actionLoading} />
+
+      <SendToClientModal
+        open={sendModalOpen}
+        onClose={() => setSendModalOpen(false)}
+        onSent={() => fetchSingleInvoice(inv.id)}
+        documentType="invoice"
+        documentNumber={inv?.invoice_number}
+        documentId={inv?.id}
+        documentData={inv}
+        clientName={inv?.client?.company_name}
+        clientEmail={inv?.client?.email}
+      />
+
+      <SendToClientModal
+        open={Boolean(receiptToEmail)}
+        onClose={() => setReceiptToEmail(null)}
+        onSent={() => fetchSingleInvoice(inv.id)}
+        documentType="receipt"
+        documentNumber={receiptToEmail?.receipt_number}
+        documentId={receiptToEmail?.id}
+        documentData={receiptToEmail}
+        clientName={receiptToEmail?.client?.company_name || inv?.client?.company_name}
+        clientEmail={receiptToEmail?.client?.email || inv?.client?.email}
+      />
+
+      <SendToClientModal
+        open={Boolean(creditNoteToEmail)}
+        onClose={() => setCreditNoteToEmail(null)}
+        onSent={() => fetchSingleInvoice(inv.id)}
+        documentType="credit_note"
+        documentNumber={creditNoteToEmail?.credit_note_number}
+        documentId={creditNoteToEmail?.id}
+        documentData={creditNoteToEmail}
+        clientName={creditNoteToEmail?.client?.company_name || inv?.client?.company_name}
+        clientEmail={creditNoteToEmail?.client?.email || inv?.client?.email}
+      />
     </div>
   );
 };
