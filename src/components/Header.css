@@ -25,9 +25,10 @@
 }
 
 .app-header.theme-light {
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  background: rgba(248, 251, 255, 0.86);
+  border-bottom: 1px solid rgba(37, 99, 235, 0.12);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.055);
+  backdrop-filter: blur(16px);
 }
 
 /* ── Left ────────────────────────────────────── */
@@ -75,7 +76,7 @@
 }
 
 .theme-light .hamburger-btn {
-  color: #64748b;
+  color: #475569;
 }
 
 .hamburger-btn:hover {
@@ -120,12 +121,15 @@
 }
 
 .theme-light .header-icon-btn {
-  color: #64748b;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.64);
+  border: 1px solid rgba(37, 99, 235, 0.08);
 }
 
 .header-icon-btn:hover {
   background: rgba(26, 86, 219, 0.1);
   color: #1a56db;
+  border-color: rgba(26, 86, 219, 0.14);
 }
 
 /* Mobile search icon — hidden on desktop */
@@ -176,7 +180,9 @@
 }
 
 .theme-light .avatar-btn {
-  color: #1e293b;
+  color: #142033;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(37, 99, 235, 0.08);
 }
 
 .avatar-btn:hover,
@@ -251,9 +257,10 @@
 }
 
 .theme-light .avatar-dropdown {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.13);
+  backdrop-filter: blur(16px);
 }
 
 @keyframes dropIn {

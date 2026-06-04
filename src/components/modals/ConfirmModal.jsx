@@ -23,6 +23,7 @@ const ConfirmModal = ({
   variant = 'danger',
   loading = false,
   icon,
+  extraContent = null,
 }) => {
   const { theme } = useThemeStore();
 
@@ -84,6 +85,7 @@ const ConfirmModal = ({
 
         <h3 className="cm-title">{title}</h3>
         {message && <p className="cm-message">{message}</p>}
+        {extraContent && <div className="cm-extra-content">{extraContent}</div>}
 
         <div className="cm-actions">
           <button

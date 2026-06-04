@@ -8,10 +8,12 @@ import PageNav from '../../components/PageNav';
 import useThemeStore from '../../stores/useThemeStore';
 import useInvoiceStore from '../../stores/useInvoiceStore';
 import usePaymentStore from '../../stores/usePaymentStore';
+import useCustomerPortalStore from '../../stores/useCustomerPortalStore';
 import useToastStore from '../../stores/useToastStore';
 import useAuthStore from '../../stores/useAuthStore';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import RecordPaymentModal from './RecordPaymentModal';
+import PaymentLinkModal from './PaymentLinkModal';
 import CreditNoteModal from './CreditNoteModal';
 import RefundModal from './RefundModal';
 import ReverseInvoiceModal from './ReverseInvoiceModal';
@@ -55,7 +57,8 @@ const SingleInvoice = () => {
     processRefund,
     reverseInvoice,
   } = useInvoiceStore();
-  const { recordPayment, issueReceipt, deletePayment } = usePaymentStore();
+  const { recordPayment, issueReceipt, deletePayment, createPaymentLink, sendPaymentLink, cancelPaymentLink, verifyPaymentLink } = usePaymentStore();
+  const { createCustomerPortalLink } = useCustomerPortalStore();
 
   const [nav, setNav] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -66,6 +69,7 @@ const SingleInvoice = () => {
   const [creditNoteToEmail, setCreditNoteToEmail] = useState(null);
   const [reverseOpen, setReverseOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentLinkOpen, setPaymentLinkOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [stockErrors, setStockErrors] = useState([]);
   const [sendModalOpen, setSendModalOpen] = useState(false);
@@ -115,6 +119,21 @@ const SingleInvoice = () => {
           showToast(response.message || 'Payment reminder sent successfully.', 'success');
           break;
         }
+        case 'send-payment-link': {
+          const response = await sendPaymentLink(confirm.id);
+          showToast(response.message || 'Payment request emailed successfully.', 'success');
+          break;
+        }
+        case 'verify-payment-link': {
+          const response = await verifyPaymentLink(confirm.id);
+          showToast(response.message || 'Payment request verified successfully.', 'success');
+          break;
+        }
+        case 'cancel-payment-link': {
+          const response = await cancelPaymentLink(confirm.id);
+          showToast(response.message || 'Payment request cancelled successfully.', 'success');
+          break;
+        }
       }
       setConfirm({ open: false, type: '', id: null });
       setRetryCount((c) => c + 1);
@@ -139,6 +158,60 @@ const SingleInvoice = () => {
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to record payment.', 'error');
     } finally { setActionLoading(false); }
+  };
+
+  const doCreatePaymentLink = async (payload) => {
+    setActionLoading(true);
+    try {
+      const res = await createPaymentLink(Number(id), payload);
+      const link = res.data;
+      showToast(res.message || 'Payment request created successfully.', 'success');
+      if (link?.payment_url && navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(link.payment_url);
+          showToast('Payment link copied to clipboard.', 'success');
+        } catch {
+          // Clipboard is optional; email/copy buttons remain available in the page.
+        }
+      }
+      setPaymentLinkOpen(false);
+      setRetryCount((c) => c + 1);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to create payment request.', 'error');
+    } finally { setActionLoading(false); }
+  };
+
+  const copyPaymentLink = async (value) => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      showToast('Payment link copied to clipboard.', 'success');
+    } catch {
+      showToast('Could not copy payment link.', 'error');
+    }
+  };
+
+  const doCreateCustomerPortalLink = async () => {
+    setActionLoading(true);
+    try {
+      const response = await createCustomerPortalLink(Number(id), { expires_in_days: 30 });
+      const portalUrl = response.data?.public_url;
+      if (portalUrl && navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(portalUrl);
+          showToast('Customer portal link copied to clipboard.', 'success');
+        } catch {
+          showToast(response.message || 'Customer portal link generated, but could not copy automatically.', 'warning');
+        }
+      } else {
+        showToast(response.message || 'Customer portal link generated successfully.', 'success');
+      }
+      setRetryCount((count) => count + 1);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Customer portal link could not be generated.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const doCreateCreditNote = async (payload) => {
@@ -190,6 +263,9 @@ const SingleInvoice = () => {
     'delete-payment': { title: 'Reverse Payment',  msg: 'Permanently reverse this payment and restore the invoice balance? This cannot be undone.',                   btn: 'Yes, Reverse',    variant: 'danger' },
     'issue-receipt': { title: 'Issue Payment Receipt', msg: 'Generate an official receipt for this recorded payment? Once issued, the payment can no longer be directly reversed.', btn: 'Issue Receipt', variant: 'primary' },
     'send-reminder':  { title: 'Send Payment Reminder', msg: 'Send an overdue payment reminder email to the client now? Only one reminder attempt is allowed per invoice per day.', btn: 'Send Reminder', variant: 'warning' },
+    'send-payment-link': { title: 'Send Payment Request', msg: 'Email this payment request to the client now?', btn: 'Send Request', variant: 'primary' },
+    'verify-payment-link': { title: 'Verify Paystack Payment', msg: 'Check Paystack for the latest payment status. If successful, the invoice payment and receipt will be recorded automatically.', btn: 'Verify Now', variant: 'primary' },
+    'cancel-payment-link': { title: 'Cancel Payment Request', msg: 'Cancel this unpaid payment request? The client should no longer use the payment link afterwards.', btn: 'Cancel Request', variant: 'danger' },
   };
 
   // Progress bar reflects financial adjustments and refunds.
@@ -268,6 +344,18 @@ const SingleInvoice = () => {
                 {payableStatuses.includes(inv.status) && canRecordPayment && (
                   <button className="sinv-act-btn payment" onClick={() => setPaymentOpen(true)} type="button">
                     <i className="fas fa-money-bill-wave" /> Record Payment
+                  </button>
+                )}
+
+                {payableStatuses.includes(inv.status) && canRecordPayment && (
+                  <button className="sinv-act-btn paylink" onClick={() => setPaymentLinkOpen(true)} type="button">
+                    <i className="fas fa-link" /> Payment Request
+                  </button>
+                )}
+
+                {!['draft', 'cancelled', 'reversed'].includes(inv.status) && canRecordPayment && (
+                  <button className="sinv-act-btn portal" onClick={doCreateCustomerPortalLink} type="button" disabled={actionLoading}>
+                    <i className="fas fa-user-shield" /> Customer Portal
                   </button>
                 )}
 
@@ -522,6 +610,76 @@ const SingleInvoice = () => {
               </motion.div>
             )}
 
+            {/* ── Payment Requests ── */}
+            {inv.status !== 'draft' && (
+              <motion.div className={`sinv-card theme-${theme}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.21 }}>
+                <div className="sinv-payments-header">
+                  <h3 className="sinv-card-title"><i className="fas fa-link" /> Payment Requests ({inv.payment_links?.length || 0})</h3>
+                  {payableStatuses.includes(inv.status) && canRecordPayment && (
+                    <button className="sinv-add-payment-btn sinv-link-create" onClick={() => setPaymentLinkOpen(true)} type="button">
+                      <i className="fas fa-plus" /> Create Request
+                    </button>
+                  )}
+                </div>
+                {!inv.payment_links?.length ? (
+                  <div className="sinv-no-payments">
+                    <i className="fas fa-link-slash" />
+                    <p>No payment requests created yet. Use this for manual bank-payment instructions or Paystack checkout links.</p>
+                  </div>
+                ) : (
+                  <div className="sinv-paylink-list">
+                    {inv.payment_links.map((link) => (
+                      <div key={link.id} className={`sinv-paylink-row ${link.status}`}>
+                        <div className={`sinv-paylink-icon ${link.provider}`}>
+                          <i className={`fas ${link.provider === 'paystack' ? 'fa-shield-halved' : 'fa-building-columns'}`} />
+                        </div>
+                        <div className="sinv-paylink-details">
+                          <div className="sinv-paylink-top">
+                            <span className="sinv-paylink-ref">{link.reference}</span>
+                            <span className={`sinv-paylink-provider ${link.provider}`}>{link.provider}</span>
+                            <span className={`sinv-paylink-status ${link.status}`}>{link.status_label || link.status}</span>
+                          </div>
+                          <div className="sinv-paylink-bottom">
+                            <span>{formatCurrencyDecimals(link.amount, link.currency)}</span>
+                            {link.expires_at && <span>Expires {new Date(String(link.expires_at).replace(' ', 'T')).toLocaleDateString('en-GB')}</span>}
+                            {link.gateway_response && <span>{link.gateway_response}</span>}
+                            {link.receipt_number && <span><i className="fas fa-receipt" /> {link.receipt_number}</span>}
+                          </div>
+                        </div>
+                        <div className="sinv-paylink-actions">
+                          {link.payment_url && (
+                            <button type="button" title="Copy payment link" onClick={() => copyPaymentLink(link.payment_url)}>
+                              <i className="fas fa-copy" /> Copy
+                            </button>
+                          )}
+                          {link.payment_url && link.provider === 'paystack' && (
+                            <button type="button" title="Open Paystack checkout" onClick={() => window.open(link.payment_url, '_blank', 'noopener,noreferrer')}>
+                              <i className="fas fa-arrow-up-right-from-square" /> Open
+                            </button>
+                          )}
+                          {['pending', 'processing'].includes(link.status) && canRecordPayment && (
+                            <button type="button" onClick={() => setConfirm({ open: true, type: 'send-payment-link', id: link.id })}>
+                              <i className="fas fa-envelope" /> Email
+                            </button>
+                          )}
+                          {link.provider === 'paystack' && ['pending', 'processing', 'failed'].includes(link.status) && canRecordPayment && (
+                            <button type="button" onClick={() => setConfirm({ open: true, type: 'verify-payment-link', id: link.id })}>
+                              <i className="fas fa-shield-halved" /> Verify
+                            </button>
+                          )}
+                          {['pending', 'processing'].includes(link.status) && canRecordPayment && (
+                            <button className="danger" type="button" onClick={() => setConfirm({ open: true, type: 'cancel-payment-link', id: link.id })}>
+                              <i className="fas fa-ban" /> Cancel
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
             {/* ── Payment History ── */}
             {inv.status !== 'draft' && (
               <motion.div className={`sinv-card theme-${theme}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.22 }}>
@@ -631,6 +789,9 @@ const SingleInvoice = () => {
 
       <RecordPaymentModal open={paymentOpen} invoice={inv}
         onClose={() => setPaymentOpen(false)} onConfirm={doRecordPayment} loading={actionLoading} />
+
+      <PaymentLinkModal open={paymentLinkOpen} invoice={inv}
+        onClose={() => setPaymentLinkOpen(false)} onConfirm={doCreatePaymentLink} loading={actionLoading} />
 
       <SendToClientModal
         open={sendModalOpen}

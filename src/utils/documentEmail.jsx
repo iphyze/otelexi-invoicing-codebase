@@ -9,6 +9,7 @@ import QuotationPDF from '../components/pdf/QuotationPDF';
 import ProformaPDF from '../components/pdf/ProformaPDF';
 import ReceiptPDF from '../components/pdf/ReceiptPDF';
 import CreditNotePDF from '../components/pdf/CreditNotePDF';
+import DeliveryNotePDF from '../components/pdf/DeliveryNotePDF';
 
 const ENDPOINTS = {
   invoice: {
@@ -41,6 +42,12 @@ const ENDPOINTS = {
     label: 'Credit_Note',
     numberKey: 'credit_note_number',
   },
+  delivery_note: {
+    detail: (id) => `/delivery-notes/${id}`,
+    send: (id) => `/delivery-notes/${id}/send`,
+    label: 'Delivery_Note',
+    numberKey: 'delivery_note_number',
+  },
 };
 
 const safeFileNumber = (value = 'Document') =>
@@ -58,6 +65,8 @@ const pdfElement = (type, documentData, settings) => {
       return <ReceiptPDF receipt={documentData} settings={settings} />;
     case 'credit_note':
       return <CreditNotePDF creditNote={documentData} settings={settings} />;
+    case 'delivery_note':
+      return <DeliveryNotePDF deliveryNote={documentData} settings={settings} />;
     default:
       throw new Error('Unknown document type.');
   }

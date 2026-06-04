@@ -11,6 +11,7 @@ import QuotationPDF from './QuotationPDF';
 import ProformaPDF from './ProformaPDF';
 import ReceiptPDF from './ReceiptPDF';
 import CreditNotePDF from './CreditNotePDF';
+import DeliveryNotePDF from './DeliveryNotePDF';
 import './PDFDownloadButton.css';
 
 const safeFileValue = (value, fallback) =>
@@ -43,6 +44,11 @@ const makeDoc = (type, doc, settings) => {
       return {
         component: <CreditNotePDF creditNote={doc} settings={settings} />,
         filename: `Otelex_Credit_Note_${safeFileValue(doc?.credit_note_number, 'CRN')}.pdf`,
+      };
+    case 'delivery_note':
+      return {
+        component: <DeliveryNotePDF deliveryNote={doc} settings={settings} />,
+        filename: `Otelex_Delivery_Note_${safeFileValue(doc?.delivery_note_number, 'DN')}.pdf`,
       };
     default:
       return null;
@@ -119,7 +125,9 @@ const PDFDownloadButton = ({ type, doc, className = '', label = 'Download PDF' }
           ? 'Receipt PDF could not be generated. Please try again.'
           : type === 'credit_note'
             ? 'Credit Note PDF could not be generated. Please try again.'
-            : 'PDF could not be generated. Please try again.',
+            : type === 'delivery_note'
+              ? 'Delivery Note PDF could not be generated. Please try again.'
+              : 'PDF could not be generated. Please try again.',
         'error'
       );
     } finally {

@@ -14,6 +14,7 @@ const ICON = {
   proforma: 'fa-file-circle-check',
   receipt: 'fa-receipt',
   credit_note: 'fa-file-circle-minus',
+  delivery_note: 'fa-truck-ramp-box',
 };
 
 const LABEL = {
@@ -22,6 +23,7 @@ const LABEL = {
   proforma: 'Proforma Invoice',
   receipt: 'Payment Receipt',
   credit_note: 'Credit Note',
+  delivery_note: 'Delivery Note',
 };
 
 const stageLabel = {
@@ -195,7 +197,9 @@ const SendToClientModal = ({
                   ? 'An official receipt PDF will be generated and attached to the email.'
                   : documentType === 'credit_note'
                     ? 'The issued credit note PDF will be generated and attached for the client’s records.'
-                    : 'The same PDF shown in the preview will be generated and included in the email.'}
+                    : documentType === 'delivery_note'
+                      ? 'The delivery note PDF will be generated and attached for dispatch and receipt confirmation.'
+                      : 'The same PDF shown in the preview will be generated and included in the email.'}
               </p>
             </div>
           </div>

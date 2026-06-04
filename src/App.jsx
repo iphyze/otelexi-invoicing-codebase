@@ -28,6 +28,10 @@ import EditProforma from "./pages/proformas/EditProforma";
 import Invoices from "./pages/invoices/Invoices";
 import CreateInvoice from "./pages/invoices/CreateInvoice";
 import Payments from "./pages/invoices/Payments";
+import PaymentLinks from "./pages/payments/PaymentLinks";
+import PaymentRequestPublic from "./pages/payments/PaymentRequestPublic";
+import CustomerPortalLinks from "./pages/customerPortal/CustomerPortalLinks";
+import CustomerPortalPublic from "./pages/customerPortal/CustomerPortalPublic";
 import SingleInvoice from "./pages/invoices/SingleInvoice";
 import EditInvoice from "./pages/invoices/EditInvoice";
 import CompanySettings from "./pages/settings/CompanySettings";
@@ -38,6 +42,7 @@ import TopProducts from "./pages/reports/TopProducts";
 import VatReport from "./pages/reports/VatReport";
 import StaffPerformance from "./pages/reports/StaffPerformance";
 import Outstanding from "./pages/reports/Outstanding";
+import StockLevels from "./pages/reports/StockLevels";
 import Notifications from "./pages/notifications/Notifications";
 import PreviewInvoice from "./pages/invoices/PreviewInvoice";
 import PreviewQuotation from "./pages/quotations/PreviewQuotation";
@@ -46,6 +51,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import StockMovements from "./pages/inventory/StockMovements";
 import AuditLogs from "./pages/admin/AuditLogs";
+import DeliveryNotes from "./pages/deliveryNotes/DeliveryNotes";
+import SingleDeliveryNote from "./pages/deliveryNotes/SingleDeliveryNote";
 
 
 const App = () => {
@@ -64,6 +71,8 @@ const App = () => {
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
         <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+        <Route path="/payment-request/:reference" element={<PaymentRequestPublic />} />
+        <Route path="/customer-portal/:token" element={<CustomerPortalPublic />} />
 
         {/* Dashboard is already protected, that's good */}
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -95,7 +104,11 @@ const App = () => {
         <Route path="/invoices"            element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
         <Route path="/invoices/new"        element={<ProtectedRoute><CreateInvoice /></ProtectedRoute>} />
         <Route path="/payments" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin', 'admin', 'accounting']}><Payments /></RoleRoute></ProtectedRoute>} />
+        <Route path="/payment-links" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin', 'admin', 'accounting']}><PaymentLinks /></RoleRoute></ProtectedRoute>} />
+        <Route path="/customer-portal-links" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin', 'admin', 'accounting']}><CustomerPortalLinks /></RoleRoute></ProtectedRoute>} />
         <Route path="/invoices/payments" element={<Navigate to="/payments" replace />} />
+        <Route path="/delivery-notes" element={<ProtectedRoute><DeliveryNotes /></ProtectedRoute>} />
+        <Route path="/delivery-notes/:id" element={<ProtectedRoute><SingleDeliveryNote /></ProtectedRoute>} />
         <Route path="/invoices/:id"        element={<ProtectedRoute><SingleInvoice /></ProtectedRoute>} />
         <Route path="/invoices/:id/edit"   element={<ProtectedRoute><EditInvoice /></ProtectedRoute>} />
         <Route path="/invoices/:id/preview" element={<ProtectedRoute><PreviewInvoice /></ProtectedRoute>} />
@@ -115,6 +128,7 @@ const App = () => {
         <Route path="/reports/vat"           element={<ProtectedRoute><VatReport /></ProtectedRoute>} />
         <Route path="/reports/staff"         element={<ProtectedRoute><StaffPerformance /></ProtectedRoute>} />
         <Route path="/reports/outstanding"   element={<ProtectedRoute><Outstanding /></ProtectedRoute>} />
+        <Route path="/reports/stock-levels"  element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin', 'admin', 'accounting']}><StockLevels /></RoleRoute></ProtectedRoute>} />
 
         <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 

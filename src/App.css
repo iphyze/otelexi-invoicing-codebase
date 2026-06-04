@@ -65,16 +65,20 @@
   --text-faint:    #64748b;
 }
 
-/* ── Light mode surface palette ──────────────── */
+/* ── Light mode surface palette ────────────────
+   Premium "Arctic Blue" mode: still light, but softer and richer
+   than flat white. This keeps the brand blue visible without feeling
+   washed out.
+   ───────────────────────────────────────────── */
 [data-theme="light"],
 .theme-light {
-  --bg-base:      #f0f4ff;   /* page background           */
-  --bg-surface:   #ffffff;   /* cards, header, navbar     */
-  --bg-elevated:  #f8faff;   /* inputs, table rows        */
-  --border:       #e2e8f0;
-  --text-primary:  #1e293b;
-  --text-muted:    #64748b;
-  --text-faint:    #94a3b8;
+  --bg-base:       #eef5ff;
+  --bg-surface:    rgba(255, 255, 255, 0.92);
+  --bg-elevated:   #f8fbff;
+  --border:        rgba(37, 99, 235, 0.12);
+  --text-primary:  #142033;
+  --text-muted:    #5b6b82;
+  --text-faint:    #8a9ab0;
 }
 
 /* ── Base resets ─────────────────────────────── */
@@ -91,4 +95,10 @@ body {
 [data-theme="dark"]  body,
 body.theme-dark  { background: #0f172a; color: #f1f5f9; }
 [data-theme="light"] body,
-body.theme-light { background: #f0f4ff; color: #1e293b; }
+body.theme-light {
+  background:
+    radial-gradient(circle at 7% 0%, rgba(37, 99, 235, 0.11), transparent 34%),
+    radial-gradient(circle at 92% 4%, rgba(14, 165, 233, 0.1), transparent 30%),
+    linear-gradient(135deg, #f8fbff 0%, #eef5ff 46%, #f5f9ff 100%);
+  color: #142033;
+}

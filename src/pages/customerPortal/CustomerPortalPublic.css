@@ -1,0 +1,84 @@
+.customer-public-root { min-height:100vh; position:relative; overflow:hidden; background:#f8fbff; color:#0f172a; padding:28px 18px 46px; }
+.customer-public-root.theme-dark { background:#081225; color:#f8fafc; }
+.customer-public-bg { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:0; }
+.customer-public-bg span { position:absolute; width:360px; height:360px; border-radius:999px; filter:blur(18px); opacity:.28; }
+.customer-public-bg span:nth-child(1){ left:-110px; top:-80px; background:#bfdbfe; }
+.customer-public-bg span:nth-child(2){ right:-110px; top:18%; background:#c4b5fd; }
+.customer-public-bg span:nth-child(3){ left:22%; bottom:-170px; background:#99f6e4; }
+.theme-dark .customer-public-bg span { opacity:.18; }
+.customer-public-grid { position:fixed; inset:0; pointer-events:none; z-index:0; background-image:linear-gradient(rgba(148,163,184,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.12) 1px,transparent 1px); background-size:52px 52px; mask-image:linear-gradient(to bottom,rgba(0,0,0,.8),transparent); }
+.customer-public-shell { position:relative; z-index:1; max-width:1160px; margin:0 auto; display:grid; gap:18px; }
+.customer-public-brand-card,.customer-public-card { border:1px solid rgba(148,163,184,.22); background:rgba(255,255,255,.82); backdrop-filter:blur(20px); box-shadow:0 24px 70px rgba(15,23,42,.08); }
+.theme-dark .customer-public-brand-card,.theme-dark .customer-public-card { background:rgba(15,23,42,.78); border-color:rgba(255,255,255,.09); box-shadow:0 24px 70px rgba(0,0,0,.22); }
+.customer-public-brand-card { display:flex; align-items:center; gap:16px; border-radius:26px; padding:18px; }
+.customer-public-brand-mark { width:62px; height:62px; border-radius:20px; display:grid; place-items:center; background:linear-gradient(135deg,#1a56db,#7c3aed); color:#fff; box-shadow:0 18px 38px rgba(37,99,235,.25); flex-shrink:0; overflow:hidden; }
+.customer-public-brand-mark img { width:100%; height:100%; object-fit:contain; padding:8px; }
+.customer-public-eyebrow,.customer-public-section-label { display:inline-flex; align-items:center; gap:7px; color:#2563eb; font-size:.72rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+.theme-dark .customer-public-eyebrow,.theme-dark .customer-public-section-label { color:#60a5fa; }
+.customer-public-brand-card h1 { margin:4px 0; font-size:clamp(1.35rem,3vw,2rem); letter-spacing:-.04em; }
+.customer-public-brand-card p { margin:0; color:#64748b; line-height:1.55; }
+.theme-dark .customer-public-brand-card p,.theme-dark .customer-public-muted,.theme-dark .customer-public-state p { color:#94a3b8; }
+.customer-public-card { border-radius:26px; padding:24px; }
+.customer-public-loading-card,.customer-public-empty-card { text-align:center; padding:58px 24px; }
+.customer-public-spinner { width:46px; height:46px; border:4px solid rgba(37,99,235,.14); border-top-color:#2563eb; border-radius:50%; display:block; margin:0 auto 16px; animation:customerSpin .9s linear infinite; }
+@keyframes customerSpin { to { transform:rotate(360deg); } }
+.customer-public-state-icon { width:56px; height:56px; border-radius:18px; display:grid; place-items:center; background:linear-gradient(135deg,#1a56db,#7c3aed); color:#fff; font-size:21px; box-shadow:0 16px 34px rgba(37,99,235,.2); flex-shrink:0; }
+.customer-public-state-icon.danger { background:linear-gradient(135deg,#ef4444,#f97316); }
+.customer-public-state { display:flex; gap:16px; align-items:flex-start; }
+.customer-public-state span { display:inline-flex; margin-bottom:4px; font-size:.74rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:#2563eb; }
+.customer-public-state h2 { margin:0; font-size:clamp(1.55rem,3vw,2.25rem); letter-spacing:-.05em; }
+.customer-public-state p { margin:7px 0 0; color:#64748b; }
+.customer-public-amount-grid { margin-top:20px; display:grid; grid-template-columns:1.35fr repeat(3,1fr); gap:12px; }
+.customer-public-amount-grid > div { border-radius:20px; padding:18px; background:rgba(248,250,252,.9); border:1px solid rgba(226,232,240,.9); }
+.theme-dark .customer-public-amount-grid > div { background:rgba(30,41,59,.72); border-color:rgba(148,163,184,.14); }
+.customer-public-amount-grid > div.primary { background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#fff; box-shadow:0 22px 48px rgba(37,99,235,.18); }
+.customer-public-amount-grid span { display:block; color:#64748b; font-size:.75rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; margin-bottom:7px; }
+.customer-public-amount-grid .primary span { color:rgba(255,255,255,.72); }
+.customer-public-amount-grid strong { display:block; font-size:clamp(1.2rem,2vw,1.7rem); letter-spacing:-.04em; }
+.customer-public-alert { margin-top:16px; padding:13px 14px; border-radius:16px; font-weight:800; display:flex; gap:9px; align-items:center; }
+.customer-public-alert.danger { color:#dc2626; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.16); }
+.customer-public-layout { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(320px,.8fr); gap:18px; }
+.customer-public-section-card h2,.customer-public-contact-card h2 { margin:6px 0 10px; font-size:1.25rem; letter-spacing:-.03em; }
+.customer-public-section-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.customer-public-muted { color:#64748b; line-height:1.6; margin:0; }
+.customer-public-payment-actions { display:grid; gap:10px; margin-bottom:14px; }
+.customer-public-pay-btn { min-height:58px; border-radius:18px; display:flex; align-items:center; gap:12px; padding:13px 16px; text-decoration:none; color:#fff; background:linear-gradient(135deg,#1a56db,#1e40af); box-shadow:0 18px 36px rgba(37,99,235,.18); font-weight:900; }
+.customer-public-pay-btn.manual { background:linear-gradient(135deg,#059669,#047857); }
+.customer-public-pay-btn i { width:34px; height:34px; border-radius:12px; display:grid; place-items:center; background:rgba(255,255,255,.16); }
+.customer-public-pay-btn span { flex:1; }
+.customer-public-bank-panel { margin-top:16px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.customer-public-bank-panel > div { min-width:0; padding:15px; border-radius:18px; background:rgba(248,250,252,.9); border:1px solid rgba(226,232,240,.9); }
+.theme-dark .customer-public-bank-panel > div { background:rgba(30,41,59,.72); border-color:rgba(148,163,184,.14); }
+.customer-public-bank-panel span { display:block; margin-bottom:6px; color:#64748b; font-size:.74rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.customer-public-bank-panel strong { word-break:break-word; }
+.customer-public-bank-panel button { width:100%; border:0; background:transparent; padding:0; color:inherit; font:inherit; display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer; text-align:left; }
+.customer-public-contact-list { display:grid; gap:10px; }
+.customer-public-contact-list p { margin:0; display:flex; gap:8px; align-items:flex-start; color:#64748b; line-height:1.55; }
+.theme-dark .customer-public-contact-list p { color:#cbd5e1; }
+.customer-public-contact-list i { color:#2563eb; margin-top:4px; }
+.customer-public-support-box { margin-top:18px; border-radius:18px; padding:16px; background:rgba(37,99,235,.08); border:1px solid rgba(37,99,235,.14); }
+.customer-public-support-box span { color:#2563eb; font-size:.75rem; font-weight:900; text-transform:uppercase; letter-spacing:.08em; }
+.customer-public-support-box p { margin:6px 0 0; color:#334155; line-height:1.5; }
+.theme-dark .customer-public-support-box p { color:#dbeafe; }
+.customer-public-table-wrap { overflow:auto; border-radius:18px; border:1px solid rgba(148,163,184,.18); }
+.customer-public-table { width:100%; border-collapse:collapse; min-width:760px; }
+.customer-public-table th { text-align:left; padding:13px 14px; background:rgba(248,250,252,.95); color:#64748b; font-size:.72rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.theme-dark .customer-public-table th { background:rgba(255,255,255,.04); color:#94a3b8; }
+.customer-public-table td { padding:14px; border-top:1px solid rgba(148,163,184,.14); }
+.customer-public-table small { display:block; margin-top:4px; color:#64748b; }
+.customer-public-stack-list { display:grid; gap:12px; }
+.customer-public-mini-card { border-radius:18px; padding:15px; border:1px solid rgba(148,163,184,.18); background:rgba(248,250,252,.8); }
+.theme-dark .customer-public-mini-card { background:rgba(30,41,59,.72); border-color:rgba(148,163,184,.14); }
+.customer-public-mini-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.customer-public-mini-card p { margin:7px 0; display:flex; gap:8px; color:#64748b; line-height:1.45; }
+.theme-dark .customer-public-mini-card p { color:#cbd5e1; }
+.customer-public-mini-card small { color:#64748b; }
+.customer-public-pill { display:inline-flex; align-items:center; border-radius:999px; padding:5px 9px; font-size:.68rem; font-weight:900; text-transform:uppercase; letter-spacing:.04em; color:#2563eb; background:rgba(37,99,235,.1); }
+.customer-public-pill.delivered,.customer-public-pill.paid { color:#059669; background:rgba(16,185,129,.1); }
+.customer-public-pill.dispatched { color:#7c3aed; background:rgba(139,92,246,.1); }
+.customer-public-footer-note { text-align:center; margin:4px auto 0; max-width:760px; color:#64748b; font-size:.86rem; line-height:1.6; }
+.customer-public-actions.center { display:flex; justify-content:center; }
+.customer-public-btn { min-height:42px; border:0; border-radius:12px; padding:0 16px; font:inherit; font-weight:900; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.customer-public-btn.ghost { background:rgba(148,163,184,.12); color:inherit; border:1px solid rgba(148,163,184,.2); }
+@media(max-width:900px){ .customer-public-layout,.customer-public-amount-grid{grid-template-columns:1fr}.customer-public-bank-panel{grid-template-columns:1fr}.customer-public-brand-card{align-items:flex-start}.customer-public-shell{gap:14px}.customer-public-card{padding:20px;border-radius:22px} }
+@media(max-width:560px){ .customer-public-root{padding:18px 12px 34px}.customer-public-brand-card{flex-direction:column}.customer-public-state{flex-direction:column}.customer-public-pay-btn{align-items:flex-start;flex-direction:column}.customer-public-pay-btn span{flex:unset} }

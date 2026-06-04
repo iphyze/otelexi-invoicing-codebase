@@ -7,6 +7,20 @@ const paymentService = {
   recordPayment:    (data)    => api.post('/payments/record', data),
   issueReceipt:     (id)      => api.post(`/payments/${id}/receipt`),
   deletePayment:    (id)      => api.delete(`/payments/${id}/delete`),
+
+  // Payment requests / online checkout links
+  getPaymentLinks:      (params)          => api.get('/payment-links', { params }),
+  getSinglePaymentLink: (id)              => api.get(`/payment-links/${id}`),
+  createPaymentLink:    (invoiceId, data) => api.post(`/invoices/${invoiceId}/payment-links`, data),
+  sendPaymentLink:      (id)              => api.post(`/payment-links/${id}/send`),
+  cancelPaymentLink:    (id)              => api.post(`/payment-links/${id}/cancel`),
+  verifyPaymentLink:    (id)              => api.post(`/payment-links/${id}/verify`),
+
+  // Customer-facing payment request page. This must stay public and must not trigger auth refresh.
+  getPublicPaymentRequest: (reference) => api.get('/public/payment-request', {
+    params: { reference },
+    skipAuthRefresh: true,
+  }),
 };
 
 export default paymentService;

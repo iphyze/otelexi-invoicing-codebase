@@ -1130,3 +1130,277 @@
         justify-content: flex-start;
     }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Payment request / payment link actions
+───────────────────────────────────────────────────────────── */
+.sinv-act-btn.paylink {
+    border-color: rgba(26, 86, 219, 0.28);
+    color: #1a56db;
+}
+
+.sinv-act-btn.paylink:hover {
+    background: rgba(26, 86, 219, 0.08);
+    border-color: #1a56db;
+    transform: translateY(-1px);
+}
+
+.theme-dark .sinv-act-btn.paylink {
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.32);
+}
+
+.sinv-add-payment-btn.sinv-link-create {
+    border-color: rgba(26, 86, 219, 0.25);
+    background: rgba(26, 86, 219, 0.07);
+    color: #1a56db;
+}
+
+.sinv-add-payment-btn.sinv-link-create:hover {
+    border-color: #1a56db;
+    background: rgba(26, 86, 219, 0.13);
+}
+
+.theme-dark .sinv-add-payment-btn.sinv-link-create {
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.28);
+    background: rgba(96, 165, 250, 0.08);
+}
+
+.sinv-paylink-list {
+    display: grid;
+    gap: 10px;
+}
+
+.sinv-paylink-row {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 13px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    transition: all 0.16s ease;
+}
+
+.theme-light .sinv-paylink-row {
+    background: #f8faff;
+}
+
+.theme-dark .sinv-paylink-row {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+.sinv-paylink-row:hover {
+    border-color: rgba(26, 86, 219, 0.22);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    transform: translateY(-1px);
+}
+
+.sinv-paylink-row.paid {
+    border-color: rgba(16, 185, 129, 0.22);
+}
+
+.sinv-paylink-row.failed,
+.sinv-paylink-row.cancelled,
+.sinv-paylink-row.expired {
+    border-color: rgba(239, 68, 68, 0.16);
+}
+
+.sinv-paylink-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    flex-shrink: 0;
+}
+
+.sinv-paylink-icon.manual {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.sinv-paylink-icon.paystack {
+    background: rgba(26, 86, 219, 0.1);
+    color: #1a56db;
+}
+
+.theme-dark .sinv-paylink-icon.paystack {
+    color: #60a5fa;
+}
+
+.sinv-paylink-details {
+    min-width: 0;
+}
+
+.sinv-paylink-top,
+.sinv-paylink-bottom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sinv-paylink-bottom {
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 11.5px;
+}
+
+.theme-dark .sinv-paylink-bottom {
+    color: rgba(226, 232, 240, 0.62);
+}
+
+.sinv-paylink-ref {
+    font-size: 13px;
+    font-weight: 800;
+    color: inherit;
+    word-break: break-all;
+}
+
+.sinv-paylink-provider,
+.sinv-paylink-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.sinv-paylink-provider.manual {
+    color: #047857;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.sinv-paylink-provider.paystack {
+    color: #1a56db;
+    background: rgba(26, 86, 219, 0.1);
+}
+
+.sinv-paylink-status.pending,
+.sinv-paylink-status.processing {
+    color: #b45309;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.sinv-paylink-status.paid {
+    color: #047857;
+    background: rgba(16, 185, 129, 0.11);
+}
+
+.sinv-paylink-status.failed,
+.sinv-paylink-status.expired,
+.sinv-paylink-status.cancelled {
+    color: #dc2626;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.sinv-paylink-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.sinv-paylink-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 9px;
+    border: 1px solid rgba(26, 86, 219, 0.2);
+    background: rgba(26, 86, 219, 0.06);
+    color: #1a56db;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.sinv-paylink-actions button:hover {
+    border-color: rgba(26, 86, 219, 0.42);
+    background: rgba(26, 86, 219, 0.12);
+    transform: translateY(-1px);
+}
+
+.sinv-paylink-actions button.danger {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.06);
+    color: #dc2626;
+}
+
+.sinv-paylink-actions button.danger:hover {
+    border-color: rgba(239, 68, 68, 0.42);
+    background: rgba(239, 68, 68, 0.11);
+}
+
+.theme-dark .sinv-paylink-actions button {
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.22);
+    background: rgba(96, 165, 250, 0.08);
+}
+
+.theme-dark .sinv-paylink-actions button.danger {
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.22);
+    background: rgba(248, 113, 113, 0.08);
+}
+
+@media (max-width: 920px) {
+    .sinv-paylink-row {
+        grid-template-columns: 42px minmax(0, 1fr);
+    }
+
+    .sinv-paylink-actions {
+        grid-column: 2;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 560px) {
+    .sinv-paylink-row {
+        grid-template-columns: 1fr;
+    }
+
+    .sinv-paylink-icon,
+    .sinv-paylink-actions {
+        grid-column: 1;
+    }
+
+    .sinv-paylink-actions button {
+        flex: 1 1 auto;
+    }
+}
+
+.sinv-act-btn.portal {
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #7c3aed;
+}
+
+.sinv-act-btn.portal:hover {
+    background: rgba(139, 92, 246, 0.08);
+    border-color: #7c3aed;
+    transform: translateY(-1px);
+}
+
+.theme-dark .sinv-act-btn.portal {
+    color: #a78bfa;
+    border-color: rgba(167, 139, 250, 0.32);
+}
+
+.sinv-act-btn.portal:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}

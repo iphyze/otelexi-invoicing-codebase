@@ -1,5 +1,6 @@
 // components/GlobalSearch.jsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import clientService from '../services/clientService';
 import productService from '../services/productService';
@@ -403,8 +404,15 @@ const GlobalSearch = ({ theme, forceOpen = false, onClose }) => {
     </div>
   );
 
+  const searchLayer = (
+    <>
+      <div className="gs-overlay" onClick={closeSearch} />
+      {panel}
+    </>
+  );
+
   if (forceOpen) {
-    return (<><div className="gs-overlay" onClick={closeSearch} />{panel}</>);
+    return createPortal(searchLayer, document.body);
   }
 
   return (
@@ -414,7 +422,7 @@ const GlobalSearch = ({ theme, forceOpen = false, onClose }) => {
         <span className="gs-trigger-text">Search anything...</span>
         <kbd className={`gs-shortcut theme-${theme}`}>⌘K</kbd>
       </button>
-      {open && (<><div className="gs-overlay" onClick={closeSearch} />{panel}</>)}
+      {open && createPortal(searchLayer, document.body)}
     </div>
   );
 };
