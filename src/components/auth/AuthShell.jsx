@@ -55,16 +55,6 @@ const AuthShell = ({
 
       <div className="auth-shell" data-page={pageKey}>
         <aside className="auth-aside" data-aos="fade-right">
-          <div className="auth-aside__brand">
-            <div className="auth-aside__brand-mark">
-              <img src={logoSrc} alt="Otelex Ltd" className="auth-aside__logo" />
-            </div>
-            <div className="auth-aside__brand-text">
-              <span className="auth-aside__eyebrow">Otelex Hospitality Supplies Ltd.</span>
-              <span className="auth-aside__caption">Professional invoicing workspace</span>
-            </div>
-          </div>
-
           <div className="auth-aside__hero">
             <h1>{sideTitle}</h1>
             <p>{sideDescription}</p>

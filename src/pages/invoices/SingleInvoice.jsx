@@ -23,6 +23,7 @@ import PDFDownloadButton from '../../components/pdf/PDFDownloadButton';
 import { formatCurrencyDecimals, STATUS_META } from '../../utils/helper';
 import Skeleton from '../../components/Sekeleton';
 import SendToClientModal from '../../components/modals/SendToClientModal';
+import MailProviderSelect from '../../components/mail/MailProviderSelect';
 
 const METHOD_ICONS = {
   bank_transfer: 'fa-building-columns',
@@ -63,7 +64,7 @@ const SingleInvoice = () => {
   const [nav, setNav] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [fetchError, setFetchError] = useState(null);
-  const [confirm, setConfirm] = useState({ open: false, type: '', id: null });
+  const [confirm, setConfirm] = useState({ open: false, type: '', id: null, mailProvider: 'system' });
   const [creditNoteOpen, setCreditNoteOpen] = useState(false);
   const [refundCreditNote, setRefundCreditNote] = useState(null);
   const [creditNoteToEmail, setCreditNoteToEmail] = useState(null);
@@ -115,12 +116,12 @@ const SingleInvoice = () => {
           break;
         }
         case 'send-reminder': {
-          const response = await sendOverdueReminder(Number(id));
+          const response = await sendOverdueReminder(Number(id), confirm.mailProvider || 'system');
           showToast(response.message || 'Payment reminder sent successfully.', 'success');
           break;
         }
         case 'send-payment-link': {
-          const response = await sendPaymentLink(confirm.id);
+          const response = await sendPaymentLink(confirm.id, confirm.mailProvider || 'system');
           showToast(response.message || 'Payment request emailed successfully.', 'success');
           break;
         }
@@ -135,14 +136,14 @@ const SingleInvoice = () => {
           break;
         }
       }
-      setConfirm({ open: false, type: '', id: null });
+      setConfirm({ open: false, type: '', id: null, mailProvider: 'system' });
       setRetryCount((c) => c + 1);
     } catch (err) {
       if (err.response?.data?.errors) {
         setStockErrors(err.response.data.errors);
       } else {
         showToast(err.response?.data?.message || 'Action failed.', 'error');
-        setConfirm({ open: false, type: '', id: null });
+        setConfirm({ open: false, type: '', id: null, mailProvider: 'system' });
       }
     } finally { setActionLoading(false); }
   };
@@ -765,19 +766,31 @@ const SingleInvoice = () => {
       {confirm.type && confirmConfig[confirm.type] && (
         <ConfirmModal
           open={confirm.open}
-          onClose={() => { setConfirm({ open: false, type: '', id: null }); setStockErrors([]); }}
+          onClose={() => { setConfirm({ open: false, type: '', id: null, mailProvider: 'system' }); setStockErrors([]); }}
           onConfirm={() => doAction(confirm.type)}
           title={confirmConfig[confirm.type].title}
           message={confirmConfig[confirm.type].msg}
           confirmText={confirmConfig[confirm.type].btn}
           variant={confirmConfig[confirm.type].variant}
           loading={actionLoading}
-          extraContent={stockErrors.length > 0 ? (
-            <div className="invt-stock-errors">
-              <p className="invt-stock-errors-title"><i className="fas fa-triangle-exclamation" /> Insufficient stock:</p>
-              {stockErrors.map((e, i) => <p key={i} className="invt-stock-error-item">{e}</p>)}
-            </div>
-          ) : null}
+          extraContent={(
+            <>
+              {['send-reminder', 'send-payment-link'].includes(confirm.type) && (
+                <MailProviderSelect
+                  value={confirm.mailProvider || 'system'}
+                  onChange={(mailProvider) => setConfirm((current) => ({ ...current, mailProvider }))}
+                  disabled={actionLoading}
+                  compact
+                />
+              )}
+              {stockErrors.length > 0 && (
+                <div className="invt-stock-errors">
+                  <p className="invt-stock-errors-title"><i className="fas fa-triangle-exclamation" /> Insufficient stock:</p>
+                  {stockErrors.map((e, i) => <p key={i} className="invt-stock-error-item">{e}</p>)}
+                </div>
+              )}
+            </>
+          )}
         />
       )}
 

@@ -108,8 +108,8 @@ const useInvoiceStore = create(
         get().fetchInvoices();
         return res.data;
       },
-      sendOverdueReminder: async (id) => {
-        const res = await invoiceService.sendOverdueReminder(id);
+      sendOverdueReminder: async (id, mailProvider = 'system') => {
+        const res = await invoiceService.sendOverdueReminder(id, mailProvider);
         get().refreshAfterAction(id);
         return res.data;
       },

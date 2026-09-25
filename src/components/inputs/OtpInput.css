@@ -1,0 +1,72 @@
+.otp-input {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(42px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.otp-input__box {
+  width: 100%;
+  min-width: 0;
+  height: 56px;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  text-align: center;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.otp-input__box:focus {
+  border-color: #2f6df6;
+  box-shadow: 0 0 0 3px rgba(47, 109, 246, .12);
+}
+
+.otp-input__box:disabled {
+  cursor: not-allowed;
+  opacity: .62;
+}
+
+.theme-dark .otp-input__box,
+.auth-root.theme-dark .otp-input__box {
+  border-color: rgba(148, 163, 184, .2);
+  background: rgba(255, 255, 255, .05);
+  color: #f8fafc;
+}
+
+.auth-field.has-error .otp-input__box {
+  border-color: #ef4444;
+}
+
+.auth-field.has-error .otp-input__box:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, .12);
+}
+
+.pro-mfa-modal-code .otp-input {
+  margin-bottom: 10px;
+}
+
+.pro-mfa-modal-code .otp-input__box {
+  height: 48px;
+  border-radius: 10px;
+  font-size: 17px;
+}
+
+@media (max-width: 520px) {
+  .otp-input {
+    gap: 6px;
+    grid-template-columns: repeat(6, minmax(34px, 1fr));
+  }
+
+  .otp-input__box {
+    height: 50px;
+    border-radius: 10px;
+    font-size: 18px;
+  }
+}

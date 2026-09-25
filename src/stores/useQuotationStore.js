@@ -96,10 +96,11 @@ const useQuotationStore = create(
       },
 
       // ── Status transitions ─────────────────────────────────────
-      sendQuotation: async (id) => {
+      sendQuotation: async (id, mailProvider = 'system') => {
         const res = await sendDocumentWithPdf({
           documentType: 'quotation',
           documentId: id,
+          mailProvider,
         });
         get().refreshAfterAction(id);
         return res.data;

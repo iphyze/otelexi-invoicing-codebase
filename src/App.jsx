@@ -6,6 +6,8 @@ import './assets/fontawesome/css/all.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleRoute from './components/RoleRoute';
 import Toast from './components/Toast';
+import SessionTimeoutManager from './components/SessionTimeoutManager';
+import MfaOnboardingPrompt from './components/MfaOnboardingPrompt';
 import Login from "./pages/auth/Login";
 import PublicRoute from "./components/PublicRoute";
 import Dashboard from "./pages/home/Dashboard";
@@ -51,6 +53,9 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import StockMovements from "./pages/inventory/StockMovements";
 import AuditLogs from "./pages/admin/AuditLogs";
+import MailDiagnostics from "./pages/admin/MailDiagnostics";
+import MailSettings from "./pages/admin/MailSettings";
+import SecuritySettings from "./pages/admin/SecuritySettings";
 import DeliveryNotes from "./pages/deliveryNotes/DeliveryNotes";
 import SingleDeliveryNote from "./pages/deliveryNotes/SingleDeliveryNote";
 
@@ -66,6 +71,8 @@ const App = () => {
   return (
     <>
       <Toast />
+      <SessionTimeoutManager />
+      <MfaOnboardingPrompt />
       <Routes>
 
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -118,6 +125,9 @@ const App = () => {
 
         {/* Administration controls */}
         <Route path="/admin/audit-logs" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin']}><AuditLogs /></RoleRoute></ProtectedRoute>} />
+        <Route path="/admin/mail-diagnostics" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin']}><MailDiagnostics /></RoleRoute></ProtectedRoute>} />
+        <Route path="/admin/mail-settings" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin']}><MailSettings /></RoleRoute></ProtectedRoute>} />
+        <Route path="/admin/security-settings" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin']}><SecuritySettings /></RoleRoute></ProtectedRoute>} />
         <Route path="/settings/company" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin']}><CompanySettings /></RoleRoute></ProtectedRoute>} />
         <Route path="/settings/users"   element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin']}><Users /></RoleRoute></ProtectedRoute>} />
         <Route path="/profile"          element={<ProtectedRoute><Profile /></ProtectedRoute>} />

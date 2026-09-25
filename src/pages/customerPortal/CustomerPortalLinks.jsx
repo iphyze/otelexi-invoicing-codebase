@@ -8,6 +8,7 @@ import PageNav from '../../components/PageNav';
 import SelectInput from '../../components/SelectInput';
 import DatePicker from '../../components/DatePicker';
 import ConfirmModal from '../../components/modals/ConfirmModal';
+import MailProviderSelect from '../../components/mail/MailProviderSelect';
 import useThemeStore from '../../stores/useThemeStore';
 import useToastStore from '../../stores/useToastStore';
 import useCustomerPortalStore from '../../stores/useCustomerPortalStore';
@@ -44,7 +45,7 @@ const CustomerPortalLinks = () => {
   const navigate = useNavigate();
   const [nav, setNav] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  const [confirm, setConfirm] = useState({ open: false, type: '', link: null });
+  const [confirm, setConfirm] = useState({ open: false, type: '', link: null, mailProvider: 'system' });
   const [actionLoading, setActionLoading] = useState(false);
 
   const {
@@ -88,10 +89,10 @@ const CustomerPortalLinks = () => {
     setActionLoading(true);
     try {
       let response;
-      if (confirm.type === 'send') response = await sendCustomerPortalLink(confirm.link.id);
+      if (confirm.type === 'send') response = await sendCustomerPortalLink(confirm.link.id, confirm.mailProvider || 'system');
       if (confirm.type === 'revoke') response = await revokeCustomerPortalLink(confirm.link.id);
       showToast(response?.message || 'Action completed successfully.', 'success');
-      setConfirm({ open: false, type: '', link: null });
+      setConfirm({ open: false, type: '', link: null, mailProvider: 'system' });
     } catch (err) {
       showToast(err.response?.data?.message || 'Action failed.', 'error');
     } finally {
@@ -242,13 +243,21 @@ const CustomerPortalLinks = () => {
       {confirmContent && (
         <ConfirmModal
           open={confirm.open}
-          onClose={() => setConfirm({ open: false, type: '', link: null })}
+          onClose={() => setConfirm({ open: false, type: '', link: null, mailProvider: 'system' })}
           onConfirm={runAction}
           title={confirmContent.title}
           message={confirmContent.message}
           confirmText={confirmContent.text}
           variant={confirmContent.variant}
           loading={actionLoading}
+          extraContent={confirm.type === 'send' ? (
+            <MailProviderSelect
+              value={confirm.mailProvider || 'system'}
+              onChange={(mailProvider) => setConfirm((current) => ({ ...current, mailProvider }))}
+              disabled={actionLoading}
+              compact
+            />
+          ) : null}
         />
       )}
     </div>

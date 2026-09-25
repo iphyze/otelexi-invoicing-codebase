@@ -105,6 +105,7 @@ export const sendDocumentWithPdf = async ({
   documentId,
   documentData = null,
   recipientEmail = '',
+  mailProvider = 'system',
   onStage = () => {},
 }) => {
   const config = ENDPOINTS[documentType];
@@ -129,6 +130,7 @@ export const sendDocumentWithPdf = async ({
     formData.append('recipient_email', recipientEmail.trim());
   }
   formData.append('pdf_attachment', pdfAttachment, pdfAttachment.name);
+  formData.append('mail_provider', mailProvider || 'system');
 
   onStage('sending');
   return api.post(config.send(documentId), formData);

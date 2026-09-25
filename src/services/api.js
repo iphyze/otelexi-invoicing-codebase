@@ -17,6 +17,9 @@ let onSessionRefreshed = () => {};
 const AUTH_NO_REFRESH_ENDPOINTS = [
   '/auth/csrf',
   '/auth/login',
+  '/auth/mfa/verify',
+  '/auth/mfa/resend',
+  '/auth/device-limit/revoke',
   '/auth/logout',
   '/auth/refresh',
   '/auth/forgot-password',
@@ -82,6 +85,18 @@ api.interceptors.response.use(
       }
     }
 
+    const sessionReason = error.response?.data?.reason;
+    const terminalSessionReasons = ['idle_timeout', 'absolute_timeout', 'deactivated', 'security_change', 'device_mismatch', 'revoked'];
+
+    if (error.response?.status === 401 && terminalSessionReasons.includes(sessionReason)) {
+      setCsrfToken(null);
+      onSessionExpired({
+        reason: sessionReason,
+        message: error.response?.data?.message || null,
+      });
+      return Promise.reject(error);
+    }
+
     if (error.response?.status !== 401 || originalRequest._retry || shouldSkipRefresh) {
       return Promise.reject(error);
     }
@@ -98,7 +113,7 @@ api.interceptors.response.use(
           .then((response) => {
             const data = response.data?.data || {};
             setCsrfToken(data.csrf_token);
-            if (data.user) onSessionRefreshed(data.user);
+            if (data.user) onSessionRefreshed(data.user, data.session_policy);
             return response;
           })
           .finally(() => {
@@ -110,7 +125,10 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       setCsrfToken(null);
-      onSessionExpired();
+      onSessionExpired({
+        reason: refreshError.response?.data?.reason || 'session_expired',
+        message: refreshError.response?.data?.message || null,
+      });
       return Promise.reject(refreshError);
     }
   }

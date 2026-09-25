@@ -66,3 +66,86 @@
 .pro-save-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .pro-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: proSpin 0.7s linear infinite; display: inline-block; }
 @keyframes proSpin { to { transform: rotate(360deg); } }
+
+/* Active sessions */
+.pro-session-card { grid-column: 2; }
+.pro-session-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.pro-session-heading { margin-bottom: 0; }
+.pro-session-all-btn,
+.pro-session-revoke-btn {
+  border: 1px solid rgba(239,68,68,0.22);
+  background: rgba(239,68,68,0.07);
+  color: #ef4444;
+  border-radius: 9px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.pro-session-all-btn { padding: 9px 12px; font-size: 11.5px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.pro-session-revoke-btn { padding: 7px 10px; font-size: 11px; }
+.pro-session-all-btn:hover:not(:disabled), .pro-session-revoke-btn:hover:not(:disabled) { background: rgba(239,68,68,0.13); border-color: rgba(239,68,68,0.4); }
+.pro-session-all-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.pro-session-list { display: grid; gap: 9px; }
+.pro-session-row { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px 13px; border-radius: 11px; border: 1px solid; }
+.theme-dark .pro-session-row { border-color: rgba(255,255,255,0.07); background: rgba(255,255,255,0.025); }
+.theme-light .pro-session-row { border-color: #e8edf4; background: #fbfdff; }
+.pro-session-row.current { border-color: rgba(16,185,129,0.28); background: rgba(16,185,129,0.045); }
+.pro-session-device-icon { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; color: #1a56db; background: rgba(26,86,219,0.09); font-size: 15px; }
+.pro-session-copy { min-width: 0; display: grid; gap: 3px; }
+.pro-session-name-line { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.pro-session-name-line strong { font-size: 12.5px; }
+.pro-session-copy > span { font-size: 11px; opacity: 0.56; }
+.pro-session-copy > small { font-size: 10.5px; opacity: 0.42; }
+.pro-session-current { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 20px; font-size: 9.5px; font-weight: 800; color: #059669; background: rgba(16,185,129,0.1); }
+.pro-session-loading, .pro-session-empty { min-height: 82px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; font-size: 12px; opacity: 0.55; }
+.theme-dark .pro-session-loading, .theme-dark .pro-session-empty { background: rgba(255,255,255,0.025); }
+.theme-light .pro-session-loading, .theme-light .pro-session-empty { background: #f8fafc; }
+.pro-session-loading .pro-spinner { border-color: rgba(26,86,219,0.22); border-top-color: #1a56db; }
+
+@media (max-width: 900px) {
+  .pro-session-card { grid-column: auto; }
+  .pro-session-head { flex-direction: column; }
+  .pro-session-all-btn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 560px) {
+  .pro-session-row { grid-template-columns: 38px minmax(0,1fr); }
+  .pro-session-device-icon { width: 38px; height: 38px; }
+  .pro-session-revoke-btn { grid-column: 1 / -1; width: 100%; }
+}
+
+/* Email MFA */
+.pro-mfa-card { grid-column: 2; }
+.pro-mfa-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+.pro-mfa-status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 800; white-space: nowrap; }
+.pro-mfa-status.enabled { color: #059669; background: rgba(16,185,129,0.1); }
+.pro-mfa-status.disabled { color: #64748b; background: rgba(100,116,139,0.1); }
+.pro-mfa-body { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px; border-radius: 11px; border: 1px solid; }
+.theme-dark .pro-mfa-body { border-color: rgba(255,255,255,0.07); background: rgba(255,255,255,0.025); }
+.theme-light .pro-mfa-body { border-color: #e8edf4; background: #fbfdff; }
+.pro-mfa-copy { display: grid; gap: 4px; min-width: 0; }
+.pro-mfa-copy strong { font-size: 12.5px; }
+.pro-mfa-copy span { font-size: 11.5px; line-height: 1.5; opacity: 0.54; }
+.pro-mfa-action { border: 0; border-radius: 9px; padding: 9px 12px; font-family: inherit; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.pro-mfa-action.enable { color: #fff; background: linear-gradient(135deg,#1a56db,#1e3a8a); }
+.pro-mfa-action.disable { color: #b45309; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.22); }
+.pro-mfa-action:disabled { opacity: 0.5; cursor: not-allowed; }
+.pro-mfa-foot { margin-top: 11px; font-size: 10.5px; opacity: 0.48; display: flex; align-items: center; gap: 6px; }
+.pro-mfa-modal-field { display: grid; gap: 7px; text-align: left; }
+.pro-mfa-modal-field label { font-size: 11.5px; font-weight: 800; }
+.pro-mfa-modal-field input { width: 100%; box-sizing: border-box; border-radius: 9px; border: 1px solid #cbd5e1; padding: 10px 12px; font: inherit; outline: none; }
+.theme-dark .pro-mfa-modal-field input { background: rgba(5,5,22,0.25); border-color: rgba(255,255,255,0.12); color: #e2e8f0; }
+.pro-mfa-modal-field input:focus { border-color: #1a56db; box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+.pro-mfa-modal-code { display: grid; gap: 9px; }
+.pro-mfa-modal-code button { border: 0; background: transparent; color: #1a56db; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; }
+.pro-mfa-modal-code button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@media (max-width: 900px) {
+  .pro-mfa-card { grid-column: auto; }
+}
+@media (max-width: 620px) {
+  .pro-mfa-head, .pro-mfa-body { flex-direction: column; align-items: stretch; }
+  .pro-mfa-action { width: 100%; }
+  .pro-mfa-status { align-self: flex-start; }
+}

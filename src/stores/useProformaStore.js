@@ -95,10 +95,11 @@ const useProformaStore = create(
       },
 
       // ── Status transitions ─────────────────────────────────────
-      sendProforma: async (id) => {
+      sendProforma: async (id, mailProvider = 'system') => {
         const res = await sendDocumentWithPdf({
           documentType: 'proforma',
           documentId: id,
+          mailProvider,
         });
         get().refreshAfterAction(id);
         return res.data;

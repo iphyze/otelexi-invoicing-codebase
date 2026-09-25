@@ -38,8 +38,8 @@ const useCustomerPortalStore = create(
         return response.data;
       },
 
-      sendCustomerPortalLink: async (id) => {
-        const response = await customerPortalService.sendCustomerPortalLink(id);
+      sendCustomerPortalLink: async (id, mailProvider = 'system') => {
+        const response = await customerPortalService.sendCustomerPortalLink(id, mailProvider);
         get().fetchLinks();
         return response.data;
       },

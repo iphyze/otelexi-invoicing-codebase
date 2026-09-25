@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import useThemeStore from '../../stores/useThemeStore';
 import SelectInput from '../../components/SelectInput';
+import MailProviderSelect from '../../components/mail/MailProviderSelect';
 import './PaymentLinkModal.css';
 
 const PROVIDERS = [
@@ -28,13 +29,13 @@ const PaymentLinkModal = ({ open, invoice, onClose, onConfirm, loading }) => {
   const [active, setActive] = useState(false);
   const timer = useRef(null);
   const amountRef = useRef(null);
-  const [form, setForm] = useState({ provider: 'manual', amount: '', expires_in_days: 7, send_email: true });
+  const [form, setForm] = useState({ provider: 'manual', amount: '', expires_in_days: 7, send_email: true, mail_provider: 'system' });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (open) {
       clearTimeout(timer.current);
-      setForm({ provider: 'manual', amount: '', expires_in_days: 7, send_email: true });
+      setForm({ provider: 'manual', amount: '', expires_in_days: 7, send_email: true, mail_provider: 'system' });
       setErrors({});
       setMounted(true);
       requestAnimationFrame(() => requestAnimationFrame(() => setActive(true)));
@@ -87,6 +88,7 @@ const PaymentLinkModal = ({ open, invoice, onClose, onConfirm, loading }) => {
       amount,
       expires_in_days: Number(form.expires_in_days || 7),
       send_email: Boolean(form.send_email),
+      mail_provider: form.mail_provider || 'system',
     });
   };
 
@@ -164,6 +166,16 @@ const PaymentLinkModal = ({ open, invoice, onClose, onConfirm, loading }) => {
               <small>The customer receives either Paystack checkout or manual bank-payment instructions.</small>
             </span>
           </label>
+
+          {form.send_email && (
+            <div className="plm-field">
+              <MailProviderSelect
+                value={form.mail_provider || 'system'}
+                onChange={(value) => setField('mail_provider', value)}
+                disabled={loading}
+              />
+            </div>
+          )}
 
           {provider === 'paystack' && currency !== 'NGN' && (
             <div className="plm-note warning">

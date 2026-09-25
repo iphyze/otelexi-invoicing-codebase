@@ -161,52 +161,6 @@
   pointer-events: none;
 }
 
-.auth-aside__brand {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 34px;
-}
-
-.auth-aside__brand-mark {
-  width: 66px;
-  height: 66px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-}
-
-.theme-light .auth-aside__brand-mark {
-  background: rgba(255,255,255,0.64);
-}
-
-.auth-aside__logo {
-  width: 100%;
-  max-width: 150px;
-  object-fit: contain;
-}
-
-.auth-aside__brand-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.auth-aside__eyebrow {
-  font-size: 0.84rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--auth-text-soft);
-}
-
-.auth-aside__caption {
-  font-size: 1.02rem;
-  font-weight: 700;
-}
-
 .auth-aside__hero h1 {
   margin: 0 0 14px;
   font-size: clamp(2.1rem, 3vw, 3.35rem);
@@ -774,3 +728,127 @@
     width: 100%;
   }
 }
+
+/* Active-device replacement during sign in */
+.login-device-list {
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.login-device-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.login-device-option:hover,
+.login-device-option.selected {
+  border-color: rgba(47, 109, 246, 0.58);
+  background: rgba(47, 109, 246, 0.06);
+}
+
+.login-device-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.login-device-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #2f6df6;
+  background: rgba(47, 109, 246, 0.1);
+}
+
+.login-device-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.login-device-copy strong {
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.login-device-copy small {
+  font-size: 10.5px;
+  line-height: 1.45;
+  opacity: 0.62;
+}
+
+.login-device-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #94a3b8;
+  box-shadow: inset 0 0 0 3px transparent;
+}
+
+.login-device-option.selected .login-device-radio {
+  border-color: #2f6df6;
+  background: #2f6df6;
+  box-shadow: inset 0 0 0 3px #fff;
+}
+
+/* Email MFA verification step */
+.auth-mfa-note {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 13px 14px;
+  border-radius: 11px;
+  border: 1px solid rgba(26, 86, 219, 0.14);
+  background: rgba(26, 86, 219, 0.055);
+}
+.auth-mfa-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  color: #1a56db;
+  background: rgba(26, 86, 219, 0.1);
+}
+.auth-mfa-note > div { display: grid; gap: 3px; }
+.auth-mfa-note strong { font-size: 12.5px; }
+.auth-mfa-note span { font-size: 11.5px; line-height: 1.5; opacity: 0.58; }
+.auth-code-wrap input {
+  letter-spacing: 0.36em;
+  font-size: 19px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.auth-mfa-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.auth-text-btn {
+  border: 0;
+  background: transparent;
+  color: #1a56db;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 3px 0;
+}
+.auth-text-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+.auth-text-btn:not(:disabled):hover { text-decoration: underline; }

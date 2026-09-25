@@ -70,8 +70,9 @@ const UserModal = ({ open, user, onClose, onSuccess }) => {
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = 'Invalid email format.';
     if (!isEdit || form.password) {
       if (!isEdit && !form.password) e.password = 'Password is required.';
-      if (form.password && form.password.length < 8) e.password = 'Password must be at least 8 characters.';
-      if (form.password && !/[^a-zA-Z0-9]/.test(form.password)) e.password = 'Password must contain a special character.';
+      if (form.password && form.password.length < 12) e.password = 'Password must be at least 12 characters.';
+      const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter((rx) => rx.test(form.password)).length;
+      if (form.password && form.password.length < 16 && classes < 3) e.password = 'Use at least 3 character types, or a 16+ character passphrase.';
     }
     if (!form.role) e.role = 'Please select a role.';
     return e;
@@ -155,7 +156,7 @@ const UserModal = ({ open, user, onClose, onSuccess }) => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 className={`um-input theme-${theme} ${errors.password ? 'has-error' : ''}`}
-                placeholder={isEdit ? 'Enter new password to change...' : 'Min. 8 chars + 1 special character'}
+                placeholder={isEdit ? 'Enter new password to change...' : 'Min. 12 chars; strong passphrase recommended'}
                 value={form.password}
                 onChange={(e) => set('password', e.target.value)}
               />
@@ -165,7 +166,7 @@ const UserModal = ({ open, user, onClose, onSuccess }) => {
             </div>
             {errors.password && <span className="um-error"><i className="fas fa-circle-exclamation" /> {errors.password}</span>}
             {!isEdit && (
-              <p className="um-pw-hint">Must be at least 8 characters and contain a special character (e.g. @, _, #).</p>
+              <p className="um-pw-hint">Use at least 12 characters and 3 character types, or a passphrase of 16+ characters.</p>
             )}
           </div>
 

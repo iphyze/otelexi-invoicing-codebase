@@ -8,6 +8,7 @@ import useThemeStore from '../../stores/useThemeStore';
 import useUserStore from '../../stores/useUserStore';
 import useAuthStore from '../../stores/useAuthStore';
 import useToastStore from '../../stores/useToastStore';
+import adminService from '../../services/adminService';
 import SelectInput from '../../components/SelectInput';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import UserModal from './UserModal';
@@ -85,6 +86,9 @@ const Users = () => {
       } else if (confirm.type === 'deactivate') {
         await deactivateUsers(confirm.ids);
         showToast(`${confirm.ids.length} user(s) deactivated.`, 'success');
+      } else if (confirm.type === 'mfa') {
+        const response = await adminService.resetUserMfa(confirm.ids[0]);
+        showToast(response.data?.message || 'Email MFA reset successfully.', 'success');
       }
       setConfirm({ open: false, type: '', ids: [] });
     } catch (err) {
@@ -108,6 +112,7 @@ const Users = () => {
   const confirmConfig = {
     delete:     { title: 'Delete Users',     msg: `Permanently delete ${confirm.ids.length} user(s)? This cannot be undone and will fail if they have linked records.`, btn: 'Yes, Delete',    variant: 'danger' },
     deactivate: { title: 'Deactivate Users', msg: `Deactivate ${confirm.ids.length} user(s)? They will lose access to the system.`,                                       btn: 'Deactivate',    variant: 'warning' },
+    mfa:        { title: 'Reset Email MFA',   msg: 'Reset email MFA for this user? All of their active sessions will be signed out and they can enable MFA again after signing in.', btn: 'Reset MFA', variant: 'warning' },
   };
 
   return (
@@ -237,6 +242,9 @@ const Users = () => {
                           </button>
                           {u.id !== me?.id && (
                             <>
+                              <button className="use-action-btn edit" title="Reset email MFA" onClick={() => setConfirm({ open: true, type: 'mfa', ids: [u.id] })} type="button">
+                                <i className="fas fa-shield-halved" />
+                              </button>
                               <button className="use-action-btn deactivate" title="Deactivate" onClick={() => setConfirm({ open: true, type: 'deactivate', ids: [u.id] })} type="button">
                                 <i className="fas fa-user-slash" />
                               </button>

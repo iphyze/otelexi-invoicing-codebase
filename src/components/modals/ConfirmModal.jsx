@@ -15,6 +15,7 @@ const ICON_MAP = {
 const ConfirmModal = ({
   open,
   onClose,
+  onCancel,
   onConfirm,
   title = 'Are you sure?',
   message,
@@ -24,6 +25,7 @@ const ConfirmModal = ({
   loading = false,
   icon,
   extraContent = null,
+  closeOnBackdrop = true,
 }) => {
   const { theme } = useThemeStore();
 
@@ -60,7 +62,12 @@ const ConfirmModal = ({
 
   const handleClose = () => {
     if (loading) return;
-    onClose(); // parent sets open=false → triggers exit animation above
+    onClose?.(); // parent sets open=false → triggers exit animation above
+  };
+
+  const handleCancel = () => {
+    if (loading) return;
+    (onCancel || onClose)?.();
   };
 
   if (!mounted) return null;
@@ -71,7 +78,7 @@ const ConfirmModal = ({
   return createPortal(
     <div
       className={`cm-backdrop ${active ? 'cm-visible' : ''}`}
-      onClick={handleClose}
+      onClick={closeOnBackdrop ? handleClose : undefined}
     >
       <div
         className={`cm-modal theme-${theme} ${active ? 'cm-modal-in' : 'cm-modal-out'}`}
@@ -90,7 +97,7 @@ const ConfirmModal = ({
         <div className="cm-actions">
           <button
             className="cm-btn cm-cancel"
-            onClick={handleClose}
+            onClick={handleCancel}
             type="button"
             disabled={loading}
           >

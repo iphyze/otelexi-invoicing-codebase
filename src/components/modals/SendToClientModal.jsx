@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import useThemeStore from '../../stores/useThemeStore';
 import useToastStore from '../../stores/useToastStore';
 import { fetchDocumentEmailHistory, sendDocumentWithPdf } from '../../utils/documentEmail';
+import MailProviderSelect from '../mail/MailProviderSelect';
 import './SendToClientModal.css';
 
 const ICON = {
@@ -58,6 +59,7 @@ const SendToClientModal = ({
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState('');
   const [recipient, setRecipient] = useState('');
+  const [mailProvider, setMailProvider] = useState('system');
   const [error, setError] = useState('');
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -86,6 +88,7 @@ const SendToClientModal = ({
 
     clearTimeout(exitTimer.current);
     setRecipient(clientEmail || '');
+    setMailProvider('system');
     setError('');
     setStage('');
     setMounted(true);
@@ -135,6 +138,7 @@ const SendToClientModal = ({
         documentId,
         documentData,
         recipientEmail: email,
+        mailProvider,
         onStage: setStage,
       });
 
@@ -245,6 +249,14 @@ const SendToClientModal = ({
             {error && (
               <span className="stc-error"><i className="fas fa-circle-exclamation" /> {error}</span>
             )}
+          </div>
+
+          <div className="stc-field">
+            <MailProviderSelect
+              value={mailProvider}
+              onChange={setMailProvider}
+              disabled={loading}
+            />
           </div>
 
           <div className="stc-history">

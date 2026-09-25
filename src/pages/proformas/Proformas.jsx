@@ -12,6 +12,7 @@ import useAuthStore from '../../stores/useAuthStore';
 import SelectInput from '../../components/SelectInput';
 import DatePicker from '../../components/DatePicker';
 import ConfirmModal from '../../components/modals/ConfirmModal';
+import MailProviderSelect from '../../components/mail/MailProviderSelect';
 import RejectProformaModal from './RejectProformaModal';
 import './Proformas.css';
 
@@ -108,7 +109,7 @@ const Proformas = () => {
   } = useProformaStore();
 
   const [nav, setNav] = useState(false);
-  const [confirm, setConfirm] = useState({ open: false, type: '', id: null, ids: [] });
+  const [confirm, setConfirm] = useState({ open: false, type: '', id: null, ids: [], mailProvider: 'system' });
   const [rejectModal, setRejectModal] = useState({ open: false, id: null, number: '' });
   const [actionLoading, setActionLoading] = useState(false);
   const [searchInput, setSearchInput] = useState(filters.search || '');
@@ -129,7 +130,7 @@ const Proformas = () => {
           showToast(`${confirm.ids.length} proforma(s) deleted.`, 'success');
           break;
         case 'send':
-          await sendProforma(id);
+          await sendProforma(id, confirm.mailProvider || 'system');
           showToast('Proforma PDF emailed successfully.', 'success');
           break;
         case 'approve':
@@ -141,7 +142,7 @@ const Proformas = () => {
           showToast('Converted to invoice successfully.', 'success');
           break;
       }
-      setConfirm({ open: false, type: '', id: null, ids: [] });
+      setConfirm({ open: false, type: '', id: null, ids: [], mailProvider: 'system' });
     } catch (err) {
       showToast(err.response?.data?.message || 'Action failed.', 'error');
     } finally { setActionLoading(false); }
@@ -439,13 +440,21 @@ const Proformas = () => {
       {confirm.type && confirmConfig[confirm.type] && (
         <ConfirmModal
           open={confirm.open}
-          onClose={() => setConfirm({ open: false, type: '', id: null, ids: [] })}
+          onClose={() => setConfirm({ open: false, type: '', id: null, ids: [], mailProvider: 'system' })}
           onConfirm={() => handleAction(confirm.type, confirm.id)}
           title={confirmConfig[confirm.type].title}
           message={confirmConfig[confirm.type].msg}
           confirmText={confirmConfig[confirm.type].btn}
           variant={confirmConfig[confirm.type].variant}
           loading={actionLoading}
+          extraContent={confirm.type === 'send' ? (
+            <MailProviderSelect
+              value={confirm.mailProvider || 'system'}
+              onChange={(mailProvider) => setConfirm((current) => ({ ...current, mailProvider }))}
+              disabled={actionLoading}
+              compact
+            />
+          ) : null}
         />
       )}
 

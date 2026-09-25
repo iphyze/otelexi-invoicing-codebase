@@ -11,7 +11,7 @@ import './ForgotPassword.css';
 
 const getStrength = (password) => {
   let score = 0;
-  if (password.length >= 8) score += 1;
+  if (password.length >= 16) score += 1;
   if (password.length >= 12) score += 1;
   if (/[A-Z]/.test(password)) score += 1;
   if (/[0-9]/.test(password)) score += 1;
@@ -24,10 +24,12 @@ const STRENGTH_COLORS = ['', '#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#10b98
 const STRENGTH_CLASSES = ['', 'strength-weak', 'strength-fair', 'strength-good', 'strength-strong', 'strength-strong'];
 
 const PASSWORD_REQUIREMENTS = [
-  { label: 'At least 8 characters', test: (password) => password.length >= 8 },
-  { label: 'At least one uppercase letter', test: (password) => /[A-Z]/.test(password) },
-  { label: 'At least one number', test: (password) => /[0-9]/.test(password) },
-  { label: 'At least one special character', test: (password) => /[^a-zA-Z0-9]/.test(password) },
+  { label: 'At least 12 characters', test: (password) => password.length >= 12 },
+  {
+    label: '3 character types, or a 16+ character passphrase',
+    test: (password) => password.length >= 16
+      || [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter((rx) => rx.test(password)).length >= 3,
+  },
 ];
 
 const ResetPassword = () => {
@@ -60,8 +62,11 @@ const ResetPassword = () => {
     const nextErrors = {};
 
     if (!form.password) nextErrors.password = 'Password is required.';
-    else if (form.password.length < 8) nextErrors.password = 'Password must be at least 8 characters.';
-    else if (!/[^a-zA-Z0-9]/.test(form.password)) nextErrors.password = 'Password must contain at least one special character.';
+    else if (form.password.length < 12) nextErrors.password = 'Password must be at least 12 characters.';
+    else {
+      const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter((rx) => rx.test(form.password)).length;
+      if (form.password.length < 16 && classes < 3) nextErrors.password = 'Use at least 3 character types, or a 16+ character passphrase.';
+    }
 
     if (!form.password_confirmation) nextErrors.password_confirmation = 'Please confirm your password.';
     else if (form.password !== form.password_confirmation) nextErrors.password_confirmation = 'Passwords do not match.';

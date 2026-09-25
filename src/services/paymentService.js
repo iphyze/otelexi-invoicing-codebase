@@ -12,7 +12,7 @@ const paymentService = {
   getPaymentLinks:      (params)          => api.get('/payment-links', { params }),
   getSinglePaymentLink: (id)              => api.get(`/payment-links/${id}`),
   createPaymentLink:    (invoiceId, data) => api.post(`/invoices/${invoiceId}/payment-links`, data),
-  sendPaymentLink:      (id)              => api.post(`/payment-links/${id}/send`),
+  sendPaymentLink:      (id, mailProvider = 'system') => api.post(`/payment-links/${id}/send`, { mail_provider: mailProvider }),
   cancelPaymentLink:    (id)              => api.post(`/payment-links/${id}/cancel`),
   verifyPaymentLink:    (id)              => api.post(`/payment-links/${id}/verify`),
 

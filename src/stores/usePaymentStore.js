@@ -107,8 +107,8 @@ const usePaymentStore = create(
         return res.data;
       },
 
-      sendPaymentLink: async (id) => {
-        const res = await paymentService.sendPaymentLink(id);
+      sendPaymentLink: async (id, mailProvider = 'system') => {
+        const res = await paymentService.sendPaymentLink(id, mailProvider);
         get().fetchPaymentLinks();
         return res.data;
       },

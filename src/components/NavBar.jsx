@@ -113,6 +113,9 @@ const buildMenu = (role) => {
       icon: 'fas fa-shield-halved',
       children: [
         { label: 'Audit Log', icon: 'fas fa-clipboard-list', to: '/admin/audit-logs' },
+        { label: 'Security Settings', icon: 'fas fa-shield-heart', to: '/admin/security-settings' },
+        { label: 'Mail Settings', icon: 'fas fa-envelope-open-text', to: '/admin/mail-settings' },
+        { label: 'Mail Diagnostics', icon: 'fas fa-envelope-circle-check', to: '/admin/mail-diagnostics' },
         { label: 'Users & Roles', icon: 'fas fa-users-gear', to: '/settings/users' },
         { label: 'Company Settings', icon: 'fas fa-building-lock', to: '/settings/company' },
       ],

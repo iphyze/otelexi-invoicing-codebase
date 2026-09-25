@@ -1,0 +1,21 @@
+.mps-wrap {
+  width: 100%;
+}
+
+.mps-note {
+  display: block;
+  margin-top: 7px;
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: 0.56;
+}
+
+.mps-note.is-error {
+  color: #ef4444;
+  opacity: 0.9;
+}
+
+.mps-wrap.is-compact .mps-note {
+  margin-top: 5px;
+  font-size: 10.5px;
+}
