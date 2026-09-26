@@ -26,6 +26,7 @@ const ConfirmModal = ({
   icon,
   extraContent = null,
   closeOnBackdrop = true,
+  size = 'default',
 }) => {
   const { theme } = useThemeStore();
 
@@ -81,7 +82,7 @@ const ConfirmModal = ({
       onClick={closeOnBackdrop ? handleClose : undefined}
     >
       <div
-        className={`cm-modal theme-${theme} ${active ? 'cm-modal-in' : 'cm-modal-out'}`}
+        className={`cm-modal ${size === 'wide' ? 'cm-modal-wide' : ''} theme-${theme} ${active ? 'cm-modal-in' : 'cm-modal-out'}`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

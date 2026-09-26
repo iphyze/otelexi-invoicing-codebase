@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import customerPortalService from '../../services/customerPortalService';
 import useThemeStore from '../../stores/useThemeStore';
 import useToastStore from '../../stores/useToastStore';
+import LogoLight from '../../assets/images/otelexi/logo-light.png';
+import LogoDark from '../../assets/images/otelexi/logo-dark.png';
 import './CustomerPortalPublic.css';
 
 const formatCurrency = (amount, currency = 'NGN') => {
@@ -79,7 +81,36 @@ const CustomerPortalPublic = () => {
   const payableRequests = requests.filter((request) => ['pending', 'processing'].includes(request.status) && request.payment_url);
   const manualRequest = requests.find((request) => request.provider === 'manual' && ['pending', 'processing'].includes(request.status));
 
-  const logo = useMemo(() => String(company.logo_path || '').trim(), [company.logo_path]);
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false);
+
+  const logo = useMemo(() => {
+    const raw = String(company.logo_path || '').trim();
+    if (!raw) return '';
+
+    if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('data:') || raw.startsWith('blob:')) {
+      return raw;
+    }
+
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost/otelex-server/api';
+      const apiUrl = new URL(apiBase);
+
+      if (raw.startsWith('/')) {
+        return `${apiUrl.origin}${raw}`;
+      }
+
+      const basePath = apiUrl.pathname.replace(/\/api\/?$/, '/');
+      return new URL(raw, `${apiUrl.origin}${basePath}`).toString();
+    } catch {
+      return raw;
+    }
+  }, [company.logo_path]);
+
+  const portalLogo = !logoLoadFailed && logo ? logo : (theme === 'dark' ? LogoDark : LogoLight);
+
+  useEffect(() => {
+    setLogoLoadFailed(false);
+  }, [logo]);
 
   const copyText = async (value, label) => {
     const text = String(value || '').trim();
@@ -100,7 +131,11 @@ const CustomerPortalPublic = () => {
       <main className="customer-public-shell">
         <section className="customer-public-brand-card">
           <div className="customer-public-brand-mark">
-            {logo ? <img src={logo} alt={company.company_name || 'Otelex'} /> : <i className="fas fa-user-shield" />}
+            <img
+              src={portalLogo}
+              alt={company.company_name || 'Otelex'}
+              onError={() => setLogoLoadFailed(true)}
+            />
           </div>
           <div>
             <span className="customer-public-eyebrow">Secure customer portal</span>

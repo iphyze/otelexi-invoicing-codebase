@@ -1,5 +1,5 @@
 // pages/notifications/Notifications.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import NavBar from '../../components/NavBar';
@@ -7,45 +7,8 @@ import Header from '../../components/Header';
 import PageNav from '../../components/PageNav';
 import useThemeStore from '../../stores/useThemeStore';
 import useNotificationStore from '../../stores/useNotificationStore';
+import { getNotificationMeta, getNotificationRoute, notificationTimeAgo } from '../../utils/notificationDisplay';
 import './Notifications.css';
-
-const TYPE_META = {
-  'invoice.finalized':     { icon: 'fa-paper-plane',          color: '#1a56db', label: 'Invoice Finalized' },
-  'invoice.paid':          { icon: 'fa-circle-check',         color: '#10b981', label: 'Invoice Paid' },
-  'invoice.cancelled':     { icon: 'fa-ban',                  color: '#ef4444', label: 'Invoice Cancelled' },
-  'invoice.overdue_batch': { icon: 'fa-triangle-exclamation', color: '#f59e0b', label: 'Overdue Alert' },
-  'payment.received':      { icon: 'fa-money-bill-wave',      color: '#10b981', label: 'Payment Received' },
-  'stock.low':             { icon: 'fa-box',                  color: '#f59e0b', label: 'Low Stock' },
-  'quotation.accepted':    { icon: 'fa-file-pen',             color: '#8b5cf6', label: 'Quotation Accepted' },
-  'proforma.approved':     { icon: 'fa-file-circle-check',    color: '#8b5cf6', label: 'Proforma Approved' },
-};
-
-const getMeta = (type) => TYPE_META[type] || { icon: 'fa-bell', color: '#64748b', label: 'Notification' };
-
-const getRoute = (modelType, modelId) => {
-  if (!modelType || !modelId) return null;
-  const map = {
-    Invoice:         `/invoices/${modelId}`,
-    Payment:         `/invoices`,
-    Quotation:       `/quotations/${modelId}`,
-    ProformaInvoice: `/proformas/${modelId}`,
-    Product:         `/products/${modelId}`,
-  };
-  return map[modelType] || null;
-};
-
-const timeAgo = (dateStr) => {
-  if (!dateStr) return '';
-  const diff  = Date.now() - new Date(dateStr).getTime();
-  const mins  = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days  = Math.floor(diff / 86400000);
-  if (mins < 1)   return 'Just now';
-  if (mins < 60)  return `${mins} minute${mins !== 1 ? 's' : ''} ago`;
-  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-  if (days < 7)   return `${days} day${days !== 1 ? 's' : ''} ago`;
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-};
 
 // Group notifications by date
 const groupByDate = (notifications) => {
@@ -71,13 +34,14 @@ const Notifications = () => {
   const [nav, setNav] = useState(false);
 
   const {
-    notifications, unreadCount, loading, meta, filter,
+    notifications, unreadCount, loading, meta, filter, markAllReadVersion,
     fetchNotifications, markRead, markAllRead, setFilter,
   } = useNotificationStore();
 
   const [page, setPage] = useState(1);
   const [allNotifs, setAllNotifs] = useState([]);
   const [fetching, setFetching]   = useState(false);
+  const markAllSeenRef = useRef(markAllReadVersion);
 
   useEffect(() => {
     document.title = 'Otelex | Notifications';
@@ -91,24 +55,46 @@ const Notifications = () => {
     } finally { setFetching(false); }
   };
 
-  // Sync allNotifs from store whenever notifications change
+  // Keep the page live while preserving older pages the user already loaded.
+  // The 5-second sync refreshes page 1; prepend genuinely new records and
+  // refresh matching records so read state stays accurate.
   useEffect(() => {
-    if (page === 1) {
-      setAllNotifs(notifications);
-    } else {
-      // Merge avoiding duplicates
-      setAllNotifs((prev) => {
-        const ids = new Set(prev.map((n) => n.id));
-        return [...prev, ...notifications.filter((n) => !ids.has(n.id))];
-      });
-    }
-  }, [notifications]);
+    setAllNotifs((prev) => {
+      if (page === 1) return notifications;
 
-  const handleFilterChange = (f) => {
+      const incomingById = new Map(notifications.map((n) => [n.id, n]));
+      const previousIds = new Set(prev.map((n) => n.id));
+      const newItems = notifications.filter((n) => !previousIds.has(n.id));
+      const refreshedPrevious = prev.map((n) => incomingById.get(n.id) || n);
+
+      return [...newItems, ...refreshedPrevious];
+    });
+  }, [notifications, page]);
+
+  // Mark-all can be triggered from the page or the header panel. Reflect it
+  // across every locally loaded page, not just the first 20 store records.
+  useEffect(() => {
+    if (markAllSeenRef.current === markAllReadVersion) return;
+    markAllSeenRef.current = markAllReadVersion;
+
+    setAllNotifs((prev) => filter === 'unread'
+      ? []
+      : prev.map((n) => ({
+          ...n,
+          is_read: true,
+          read_at: n.read_at || new Date().toISOString(),
+        })));
+  }, [markAllReadVersion, filter]);
+
+  const handleFilterChange = async (f) => {
     setPage(1);
     setAllNotifs([]);
-    setFilter(f);
-    loadPage(1, f);
+    setFetching(true);
+    try {
+      await setFilter(f);
+    } finally {
+      setFetching(false);
+    }
   };
 
   const handleLoadMore = () => {
@@ -117,9 +103,27 @@ const Notifications = () => {
     loadPage(next);
   };
 
+  const applyLocalRead = (ids) => {
+    const idSet = new Set(ids.map(Number));
+    setAllNotifs((prev) => filter === 'unread'
+      ? prev.filter((n) => !idSet.has(Number(n.id)))
+      : prev.map((n) => idSet.has(Number(n.id))
+        ? { ...n, is_read: true, read_at: n.read_at || new Date().toISOString() }
+        : n));
+  };
+
+  const handleMarkRead = async (ids) => {
+    const ok = await markRead(ids);
+    if (ok) applyLocalRead(ids);
+  };
+
+  const handleMarkAllRead = async () => {
+    await markAllRead();
+  };
+
   const handleItemClick = async (notif) => {
-    if (!notif.is_read) await markRead([notif.id]);
-    const route = getRoute(notif.model_type, notif.model_id);
+    if (!notif.is_read) await handleMarkRead([notif.id]);
+    const route = getNotificationRoute(notif.model_type, notif.model_id);
     if (route) navigate(route);
   };
 
@@ -161,7 +165,7 @@ const Notifications = () => {
             </div>
 
             {unreadCount > 0 && (
-              <button className="notif-mark-all-btn" onClick={markAllRead} type="button">
+              <button className="notif-mark-all-btn" onClick={handleMarkAllRead} type="button">
                 <i className="fas fa-check-double" /> Mark all as read
               </button>
             )}
@@ -188,7 +192,7 @@ const Notifications = () => {
                 <h4>{filter === 'unread' ? 'All caught up!' : 'No notifications yet'}</h4>
                 <p>{filter === 'unread'
                   ? 'You have no unread notifications.'
-                  : 'Notifications about invoices, payments, and stock will appear here.'
+                  : 'Notifications about quotations, proformas, invoices, payments, deliveries, and stock will appear here.'
                 }</p>
               </motion.div>
             )}
@@ -202,8 +206,8 @@ const Notifications = () => {
                   </div>
 
                   {items.map((n, i) => {
-                    const meta    = getMeta(n.type);
-                    const hasLink = !!getRoute(n.model_type, n.model_id);
+                    const meta    = getNotificationMeta(n.type);
+                    const hasLink = !!getNotificationRoute(n.model_type, n.model_id);
                     return (
                       <motion.div
                         key={n.id}
@@ -223,7 +227,7 @@ const Notifications = () => {
                         <div className="notif-item-body">
                           <div className="notif-item-top">
                             <span className="notif-item-title">{n.title}</span>
-                            <span className="notif-item-time">{timeAgo(n.created_at)}</span>
+                            <span className="notif-item-time">{notificationTimeAgo(n.created_at, { long: true })}</span>
                           </div>
                           <p className="notif-item-msg">{n.message}</p>
                           <div className="notif-item-meta">
@@ -234,7 +238,7 @@ const Notifications = () => {
                               <button
                                 className="notif-mark-single"
                                 type="button"
-                                onClick={(e) => { e.stopPropagation(); markRead([n.id]); }}
+                                onClick={(e) => { e.stopPropagation(); handleMarkRead([n.id]); }}
                               >
                                 Mark read
                               </button>

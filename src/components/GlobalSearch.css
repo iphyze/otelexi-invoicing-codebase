@@ -3,6 +3,7 @@
 /* ── Trigger button (desktop search bar) ────────────────────── */
 .gs-wrapper {
   position: relative;
+  width: 100%;
 }
 
 .gs-trigger {
@@ -16,8 +17,8 @@
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  min-width: 220px;
-  max-width: 320px;
+  min-width: 240px;
+  max-width: 450px;
   width: 100%;
   transition: border-color 0.18s, box-shadow 0.18s;
 }

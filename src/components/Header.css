@@ -25,9 +25,9 @@
 }
 
 .app-header.theme-light {
-  background: rgba(248, 251, 255, 0.86);
-  border-bottom: 1px solid rgba(37, 99, 235, 0.12);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.055);
+  background: rgba(252, 252, 253, 0.9);
+  border-bottom: 1px solid rgba(37, 99, 235, 0.08);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.045);
   backdrop-filter: blur(16px);
 }
 
@@ -87,8 +87,8 @@
 /* Desktop search container — left-anchored, max-width capped */
 .header-search-desktop {
   flex: 1;
-  max-width: 400px;
-  /* keeps it from stretching all the way across */
+  max-width: 470px;
+  /* Wider on desktop without allowing it to dominate the header. */
   min-width: 0;
 }
 

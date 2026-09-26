@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import useThemeStore from '../../stores/useThemeStore';
 import { formatCurrencyDecimals } from '../../utils/helper';
+import SelectInput from '../../components/SelectInput';
+
+const REFUND_METHOD_OPTIONS = [
+  { value: 'bank_transfer', label: 'Bank Transfer' },
+  { value: 'cash', label: 'Cash' },
+  { value: 'cheque', label: 'Cheque' },
+  { value: 'pos', label: 'POS' },
+  { value: 'other', label: 'Other' },
+];
 
 const RefundModal = ({ open, creditNote, invoice, onClose, onConfirm, loading }) => {
   const { theme } = useThemeStore();
@@ -37,7 +46,15 @@ const RefundModal = ({ open, creditNote, invoice, onClose, onConfirm, loading })
         <div className="fin-modal-body">
           <div className="fin-field"><label>Refund Amount</label><input type="number" min="0.01" step="0.01" max={available} value={form.amount} onChange={(e) => setForm((v) => ({ ...v, amount: e.target.value }))} /><small>Available for refund: {formatCurrencyDecimals(available, invoice.currency)}</small></div>
           <div className="fin-field"><label>Refund Date</label><input type="date" value={form.refund_date} onChange={(e) => setForm((v) => ({ ...v, refund_date: e.target.value }))} /></div>
-          <div className="fin-field"><label>Refund Method</label><select value={form.payment_method} onChange={(e) => setForm((v) => ({ ...v, payment_method: e.target.value }))}><option value="bank_transfer">Bank Transfer</option><option value="cash">Cash</option><option value="cheque">Cheque</option><option value="pos">POS</option><option value="other">Other</option></select></div>
+          <div className="fin-field">
+            <label>Refund Method</label>
+            <SelectInput
+              options={REFUND_METHOD_OPTIONS}
+              value={form.payment_method}
+              onChange={(value) => setForm((v) => ({ ...v, payment_method: value }))}
+              disabled={loading}
+            />
+          </div>
           <div className="fin-field"><label>Reference (Optional)</label><input value={form.reference} onChange={(e) => setForm((v) => ({ ...v, reference: e.target.value }))} placeholder="Bank reference or approval number" /></div>
           <div className="fin-field"><label>Notes (Optional)</label><textarea value={form.notes} onChange={(e) => setForm((v) => ({ ...v, notes: e.target.value }))} placeholder="Record any supporting detail for this refund..." /></div>
           {error && <span className="fin-error"><i className="fas fa-circle-exclamation" /> {error}</span>}

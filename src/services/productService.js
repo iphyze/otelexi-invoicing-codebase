@@ -11,6 +11,8 @@ const productService = {
   deleteProducts: (productIds) => api.delete('/products/delete', { data: { productIds } }),
   deactivateProducts: (productIds) => api.put('/products/deactivate', { productIds }),
   getLowStock: (params) => api.get('/products/low-stock', { params }),
+  previewProductImport: (data) => api.post('/products/import/preview', data),
+  importProducts: (data) => api.post('/products/import', data),
 
   // ── Product Categories ─────────────────────────────────────
   getCategories: (params) => api.get('/products/categories', { params }),

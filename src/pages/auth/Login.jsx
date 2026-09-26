@@ -220,8 +220,25 @@ const Login = () => {
           { icon: 'fa-cookie-bite', label: 'Secure session cookies' },
           { icon: 'fa-user-shield', label: 'Role-based access' },
         ]}
-        sideTitle="Operate your invoicing workflow from a secure, polished environment."
-        sideDescription="Otelex helps your team stay organised and professional with streamlined business documents, secure sessions and dependable financial workflow control."
+        sideTitle="Business invoicing, kept simple."
+        sideDescription="One secure workspace for the documents, payments and customer activity your team handles every day."
+        features={[
+          {
+            icon: 'fa-file-invoice',
+            title: 'Document workflows',
+            text: 'Create and manage quotations, proformas and invoices from one place.',
+          },
+          {
+            icon: 'fa-shield-halved',
+            title: 'Secure access',
+            text: 'Protected sessions, MFA and role-aware permissions for your team.',
+          },
+          {
+            icon: 'fa-chart-line',
+            title: 'Business visibility',
+            text: 'Keep payments, stock and customer activity easy to follow.',
+          },
+        ]}
       >
         {isMfaStep ? (
           <form className="auth-form" onSubmit={handleMfaVerify} noValidate>

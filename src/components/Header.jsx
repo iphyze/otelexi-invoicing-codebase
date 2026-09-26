@@ -23,11 +23,34 @@ const Header = ({ nav, setNav }) => {
   // ── Notification store ─────────────────────────────────────────
   const { unreadCount, panelOpen, togglePanel, startPolling, stopPolling } = useNotificationStore();
 
-  // Start polling on mount, stop on unmount
+  // Start near-live notification polling while the user is signed in.
+  // Also refresh immediately when the app regains focus/visibility so
+  // notifications created while the user was away appear straight away.
   useEffect(() => {
-    if (user) startPolling(30000);   // poll every 30 s
-    return () => stopPolling();
-  }, [user]);
+    if (!user) return undefined;
+
+    startPolling(5000);
+
+    const refreshNotifications = () => {
+      useNotificationStore.getState().silentPoll();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshNotifications();
+    };
+
+    window.addEventListener('focus', refreshNotifications);
+    window.addEventListener('online', refreshNotifications);
+    window.addEventListener('otelex:activity-completed', refreshNotifications);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshNotifications);
+      window.removeEventListener('online', refreshNotifications);
+      window.removeEventListener('otelex:activity-completed', refreshNotifications);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      stopPolling();
+    };
+  }, [user, startPolling, stopPolling]);
 
   // Close avatar dropdown on outside click
   useEffect(() => {

@@ -43,7 +43,7 @@ const AuthShell = ({
   const logoSrc = theme === 'dark' ? LogoDark : LogoLight;
 
   return (
-    <div className={`auth-root theme-${theme}`}>
+    <div className={`auth-root auth-page-authentication auth-page-${pageKey} theme-${theme}`}>
       <div className="auth-bg" aria-hidden="true">
         <span className="auth-orb auth-orb--one" />
         <span className="auth-orb auth-orb--two" />

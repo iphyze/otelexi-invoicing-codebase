@@ -58,6 +58,7 @@ import MailSettings from "./pages/admin/MailSettings";
 import SecuritySettings from "./pages/admin/SecuritySettings";
 import DeliveryNotes from "./pages/deliveryNotes/DeliveryNotes";
 import SingleDeliveryNote from "./pages/deliveryNotes/SingleDeliveryNote";
+import PwaInstallPrompt from './components/pwa/PwaInstallPrompt';
 
 
 const App = () => {
@@ -73,6 +74,7 @@ const App = () => {
       <Toast />
       <SessionTimeoutManager />
       <MfaOnboardingPrompt />
+      <PwaInstallPrompt />
       <Routes>
 
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />

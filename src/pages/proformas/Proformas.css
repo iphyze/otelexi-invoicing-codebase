@@ -164,3 +164,12 @@
 .pft-pag-btn:hover:not(:disabled):not(.is-active) { border-color: #1a56db; color: #1a56db; background: rgba(26,86,219,0.06); }
 .pft-pag-btn.is-active { background: #1a56db; border-color: #1a56db; color: #fff; box-shadow: 0 3px 8px rgba(26,86,219,0.3); }
 .pft-pag-btn:disabled  { opacity: 0.25; cursor: not-allowed; }
+
+/* Conversion workflow visibility */
+.pft-status-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.pft-workflow-hint { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; color: #64748b; white-space: nowrap; }
+.pft-workflow-hint i { font-size: 9px; color: #3b82f6; }
+.pft-workflow-hint.is-ready { color: #1a56db; }
+.pft-workflow-hint.is-ready i { color: #1a56db; }
+.theme-dark .pft-workflow-hint { color: #94a3b8; }
+.theme-dark .pft-workflow-hint.is-ready { color: #60a5fa; }

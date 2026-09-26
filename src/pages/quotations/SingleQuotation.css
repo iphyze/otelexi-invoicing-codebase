@@ -132,3 +132,17 @@
   .sq-hero { flex-direction: column; }
   .sq-hero-actions { width: 100%; }
 }
+
+/* Conversion workflow guide */
+.sq-workflow-guide { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 13px 15px; border-radius: 12px; border: 1px solid rgba(59,130,246,0.16); background: rgba(59,130,246,0.055); }
+.sq-workflow-copy { display: flex; flex-direction: column; gap: 3px; min-width: 220px; }
+.sq-workflow-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.65px; color: #3b82f6; }
+.sq-workflow-copy strong { font-size: 11.5px; line-height: 1.45; font-weight: 600; opacity: 0.72; }
+.sq-workflow-steps { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+.sq-workflow-step { display: inline-flex; align-items: center; gap: 5px; padding: 6px 9px; border-radius: 8px; font-size: 10.5px; font-weight: 700; opacity: 0.42; border: 1px solid transparent; white-space: nowrap; }
+.sq-workflow-step.is-done { opacity: 1; color: #10b981; background: rgba(16,185,129,0.08); }
+.sq-workflow-step.is-current { opacity: 1; color: #1a56db; background: rgba(26,86,219,0.09); border-color: rgba(26,86,219,0.14); }
+.sq-workflow-arrow { font-size: 8px; opacity: 0.25; }
+.theme-dark .sq-workflow-guide { background: rgba(59,130,246,0.07); border-color: rgba(96,165,250,0.14); }
+.theme-dark .sq-workflow-step.is-current { color: #60a5fa; background: rgba(96,165,250,0.09); border-color: rgba(96,165,250,0.15); }
+@media (max-width: 900px) { .sq-workflow-guide { align-items: flex-start; flex-direction: column; } .sq-workflow-steps { justify-content: flex-start; } }

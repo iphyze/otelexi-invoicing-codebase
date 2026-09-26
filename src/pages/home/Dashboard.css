@@ -17,9 +17,9 @@
 
 .main-container.theme-light {
   background:
-    radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.105), transparent 32%),
-    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.075), transparent 28%),
-    linear-gradient(135deg, #f8fbff 0%, #eef5ff 48%, #f7fbff 100%);
+    radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.035), transparent 30%),
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.025), transparent 26%),
+    linear-gradient(135deg, #fcfcfd 0%, #f7f8fa 48%, #fafbfc 100%);
   color: #142033;
 }
 
@@ -184,12 +184,19 @@
 
 .db-toggle button:hover:not(:disabled) {
   color: #2563eb;
+  background: rgba(37, 99, 235, 0.06);
 }
 
 .db-toggle button.active {
   color: #fff;
   background: #2563eb;
   box-shadow: 0 7px 15px rgba(37, 99, 235, 0.27);
+}
+
+.db-toggle button.active:hover:not(:disabled) {
+  color: #fff;
+  background: #1d4ed8;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.32);
 }
 
 .db-toggle button:disabled,
@@ -286,12 +293,15 @@
 .db-kpi::after {
   content: '';
   position: absolute;
-  right: -32px;
-  top: -36px;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  opacity: 0.13;
+  right: -24px;
+  top: -30px;
+  width: 150px;
+  height: 86px;
+  border-radius: 48% 52% 58% 42% / 44% 56% 44% 56%;
+  filter: blur(24px);
+  opacity: 0.18;
+  pointer-events: none;
+  transform: rotate(-8deg);
 }
 
 .theme-light .db-kpi {

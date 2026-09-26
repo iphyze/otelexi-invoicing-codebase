@@ -28,8 +28,11 @@ const buildMenu = (role) => {
       label: 'Products',
       icon: 'fas fa-boxes-stacked',
       children: [
-        { label: 'Product List', icon: 'fas fa-list', to: '/products' },
-        ...(canManageOperations ? [{ label: 'Categories', icon: 'fas fa-tags', to: '/products/categories' }] : []),
+        { label: 'Product List', icon: 'fas fa-list', to: '/products', exact: true },
+        ...(canManageOperations ? [
+          { label: 'Import Products', icon: 'fas fa-file-import', to: '/products/import' },
+          { label: 'Categories', icon: 'fas fa-tags', to: '/products/categories' },
+        ] : []),
       ],
     });
   }
@@ -168,6 +171,7 @@ const NavItem = ({ item, onNavigate, unreadCount = 0 }) => {
           <li key={child.to} className="submenu-item">
             <NavLink
               to={child.to}
+              end={child.exact}
               className={({ isActive }) => `submenu-link ${isActive ? 'active' : ''}`}
               onClick={onNavigate}
             >

@@ -26,6 +26,19 @@ const STATUS_META = {
   converted: { label: 'Converted', cls: 'pf-converted', icon: 'fa-arrows-turn-to-dots' },
 };
 
+
+const proformaConversionMessage = (status) => {
+  if (status === 'draft') {
+    return 'This proforma is still in Draft and has not been emailed or approved. You can still convert it to a final invoice. No email will be sent. The proforma will be marked as converted. Stock will be deducted when the invoice is finalized.';
+  }
+
+  if (status === 'sent') {
+    return 'This proforma has been sent but has not been approved. You can still convert it to a final invoice. No additional email will be sent. The proforma will be marked as converted. Stock will be deducted when the invoice is finalized.';
+  }
+
+  return 'Convert this proforma to a final invoice? The proforma will be marked as converted. Stock will be deducted when the invoice is finalized.';
+};
+
 const StatusBadge = ({ status, isExpired }) => {
   const s = isExpired ? STATUS_META.expired : (STATUS_META[status] || STATUS_META.draft);
   return (
@@ -137,10 +150,22 @@ const Proformas = () => {
           await approveProforma(id);
           showToast('Proforma approved.', 'success');
           break;
-        case 'convert-invoice':
-          await convertToInvoice(id);
-          showToast('Converted to invoice successfully.', 'success');
+        case 'convert-invoice': {
+          const result = await convertToInvoice(id);
+          const createdInvoice = result?.data?.invoice;
+          showToast(
+            createdInvoice?.invoice_number
+              ? `${createdInvoice.invoice_number} created successfully.`
+              : 'Converted to invoice successfully.',
+            'success'
+          );
+          if (createdInvoice?.id) {
+            setConfirm({ open: false, type: '', id: null, ids: [], mailProvider: 'system' });
+            navigate(`/invoices/${createdInvoice.id}`);
+            return;
+          }
           break;
+        }
       }
       setConfirm({ open: false, type: '', id: null, ids: [], mailProvider: 'system' });
     } catch (err) {
@@ -178,8 +203,8 @@ const Proformas = () => {
   const confirmConfig = {
     delete:           { title: 'Delete Proforma(s)',   msg: `Permanently delete ${confirm.ids?.length} draft proforma(s)?`,                   btn: 'Yes, Delete',       variant: 'danger' },
     send:             { title: 'Email Proforma PDF',    msg: 'Email this proforma as a PDF attachment to the client email on file? It will be marked as sent after successful delivery.', btn: 'Send with PDF', variant: 'primary' },
-    approve:          { title: 'Approve Proforma',      msg: 'Mark this proforma as approved? You can then convert it to a final invoice.',     btn: 'Approve',           variant: 'success' },
-    'convert-invoice':{ title: 'Convert to Invoice',   msg: 'Convert this approved proforma to a final invoice? Stock deducts on finalization.', btn: 'Convert to Invoice', variant: 'success' },
+    approve:          { title: 'Approve Proforma',      msg: 'Mark this proforma as approved for workflow tracking? Approval is optional for conversion.',     btn: 'Approve',           variant: 'success' },
+    'convert-invoice':{ title: 'Convert to Invoice',   msg: proformaConversionMessage(confirm.sourceStatus), btn: 'Convert to Invoice', variant: 'success' },
   };
 
   return (
@@ -373,7 +398,17 @@ const Proformas = () => {
                           )}
                         </div>
                       </td>
-                      <td><StatusBadge status={p.status} isExpired={p.is_expired} /></td>
+                      <td>
+                        <div className="pft-status-cell">
+                          <StatusBadge status={p.status} isExpired={p.is_expired} />
+                          {!p.is_expired && ['draft', 'sent', 'approved'].includes(p.status) && (
+                            <span className="pft-workflow-hint is-ready">
+                              <i className="fas fa-file-invoice" />
+                              Conversion available
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td>
                         <div className="pft-row-actions">
                           <button className="pft-action-btn view" title="View" onClick={() => navigate(`/proformas/${p.id}`)}>
@@ -402,8 +437,12 @@ const Proformas = () => {
                               </button>
                             </>
                           )}
-                          {p.status === 'approved' && (
-                            <button className="pft-action-btn invoice" title="Convert to Invoice" onClick={() => setConfirm({ open: true, type: 'convert-invoice', id: p.id })}>
+                          {!p.is_expired && ['draft', 'sent', 'approved'].includes(p.status) && (
+                            <button
+                              className="pft-action-btn invoice"
+                              title="Convert to Invoice"
+                              onClick={() => setConfirm({ open: true, type: 'convert-invoice', id: p.id, sourceStatus: p.status })}
+                            >
                               <i className="fas fa-file-invoice" />
                             </button>
                           )}

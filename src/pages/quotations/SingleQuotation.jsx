@@ -19,6 +19,22 @@ import Skeleton from '../../components/Sekeleton';
 
 
 // ── Main page ─────────────────────────────────────────────────────
+
+const quotationConversionMessage = (status, target) => {
+  const targetLabel = target === 'proforma' ? 'a proforma invoice' : 'a final invoice';
+  const invoiceNote = target === 'invoice' ? ' Stock will be deducted when the invoice is finalized.' : '';
+
+  if (status === 'draft') {
+    return `This quotation is still in Draft and has not been emailed or accepted. You can still convert it to ${targetLabel}. No email will be sent. The quotation will be marked as converted.${invoiceNote}`;
+  }
+
+  if (status === 'sent') {
+    return `This quotation has been sent but has not been accepted. You can still convert it to ${targetLabel}. No additional email will be sent. The quotation will be marked as converted.${invoiceNote}`;
+  }
+
+  return `Convert this quotation to ${targetLabel}? The quotation will be marked as converted.${invoiceNote}`;
+};
+
 const SingleQuotation = () => {
   const { id } = useParams();
   const navigate  = useNavigate();
@@ -69,14 +85,38 @@ const SingleQuotation = () => {
           showToast('Quotation deleted.', 'success');
           navigate('/quotations');
           return;
-        case 'convert-proforma':
-          await convertToProforma(id);
-          showToast('Converted to proforma invoice.', 'success');
+        case 'convert-proforma': {
+          const result = await convertToProforma(id);
+          const createdProforma = result?.data?.proforma;
+          showToast(
+            createdProforma?.proforma_number
+              ? `${createdProforma.proforma_number} created successfully.`
+              : 'Converted to proforma invoice.',
+            'success'
+          );
+          if (createdProforma?.id) {
+            setConfirm({ open: false, type: '' });
+            navigate(`/proformas/${createdProforma.id}`);
+            return;
+          }
           break;
-        case 'convert-invoice':
-          await convertToInvoice(id);
-          showToast('Converted to invoice.', 'success');
+        }
+        case 'convert-invoice': {
+          const result = await convertToInvoice(id);
+          const createdInvoice = result?.data?.invoice;
+          showToast(
+            createdInvoice?.invoice_number
+              ? `${createdInvoice.invoice_number} created successfully.`
+              : 'Converted to invoice.',
+            'success'
+          );
+          if (createdInvoice?.id) {
+            setConfirm({ open: false, type: '' });
+            navigate(`/invoices/${createdInvoice.id}`);
+            return;
+          }
           break;
+        }
       }
       setConfirm({ open: false, type: '' });
       setRetryCount((c) => c + 1);
@@ -98,11 +138,11 @@ const SingleQuotation = () => {
   };
 
   const confirmConfig = {
-    accept:  { title: 'Accept Quotation',         msg: 'Accept this quotation? You can then convert it to a proforma or invoice.',    btn: 'Accept',            variant: 'success' },
+    accept:  { title: 'Accept Quotation',         msg: 'Accept this quotation for workflow tracking? Acceptance is optional for conversion.',    btn: 'Accept',            variant: 'success' },
     reopen:  { title: 'Reopen Quotation',         msg: 'Reopen this rejected quotation back to draft?',                              btn: 'Reopen',            variant: 'warning' },
     delete:  { title: 'Delete Quotation',         msg: 'Permanently delete this draft quotation? This cannot be undone.',            btn: 'Yes, Delete',       variant: 'danger' },
-    'convert-proforma': { title: 'Convert to Proforma', msg: 'Convert to a proforma invoice? Quotation will be marked as converted.',  btn: 'Convert to Proforma', variant: 'primary' },
-    'convert-invoice':  { title: 'Convert to Invoice',  msg: 'Convert directly to a final invoice? Stock will deduct when finalized.', btn: 'Convert to Invoice',  variant: 'success' },
+    'convert-proforma': { title: 'Convert to Proforma', msg: quotationConversionMessage(q?.status, 'proforma'), btn: 'Convert to Proforma', variant: 'primary' },
+    'convert-invoice':  { title: 'Convert to Invoice',  msg: quotationConversionMessage(q?.status, 'invoice'), btn: 'Convert to Invoice', variant: 'success' },
   };
 
   return (
@@ -196,7 +236,7 @@ const SingleQuotation = () => {
                       </button>
                     </>
                   )}
-                  {q.status === 'accepted' && isMine && (
+                  {!q.is_expired && ['draft', 'sent', 'accepted'].includes(q.status) && isMine && (
                     <>
                       <button className="sq-act-btn proforma" onClick={() => setConfirm({ open: true, type: 'convert-proforma' })} type="button">
                         <i className="fas fa-file-circle-check" /> To Proforma
@@ -217,6 +257,30 @@ const SingleQuotation = () => {
                     </button>
                   )}
                 </div>
+
+                {!q.is_expired && ['draft', 'sent', 'accepted'].includes(q.status) && (
+                  <div className={`sq-workflow-guide is-${q.status}`}>
+                    <div className="sq-workflow-copy">
+                      <span className="sq-workflow-label">Conversion options</span>
+                      <strong>
+                        {q.status === 'draft' && 'Conversion is available now. Emailing and acceptance are optional workflow actions.'}
+                        {q.status === 'sent' && 'Conversion is available now. Acceptance remains optional for workflow tracking.'}
+                        {q.status === 'accepted' && 'Conversion is available now to either a proforma or invoice.'}
+                      </strong>
+                    </div>
+                    <div className="sq-workflow-steps" aria-label="Quotation conversion options">
+                      <span className={`sq-workflow-step ${['sent', 'accepted'].includes(q.status) ? 'is-done' : ''}`}>
+                        <i className="fas fa-paper-plane" /> {['sent', 'accepted'].includes(q.status) ? 'Email sent' : 'Email PDF (optional)'}
+                      </span>
+                      <span className={`sq-workflow-step ${q.status === 'accepted' ? 'is-done' : ''}`}>
+                        <i className="fas fa-circle-check" /> {q.status === 'accepted' ? 'Accepted' : 'Accept (optional)'}
+                      </span>
+                      <span className="sq-workflow-step is-current">
+                        <i className="fas fa-arrows-turn-to-dots" /> Convert to Proforma / Invoice
+                      </span>
+                    </div>
+                  </div>
+                )}
               </motion.div>
 
               {/* ── Two-column grid ── */}

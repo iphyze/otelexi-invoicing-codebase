@@ -66,7 +66,22 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Any successful business mutation may have generated a backend notification.
+    // Signal the authenticated shell so the bell/panel can refresh immediately
+    // instead of waiting for the next background polling interval.
+    const method = response.config?.method || 'get';
+    const requestUrl = response.config?.url || '';
+    const shouldSignalActivity = isStateChangingMethod(method)
+      && !requestUrl.includes('/notifications/mark-read')
+      && !requestUrl.includes('/auth/');
+
+    if (shouldSignalActivity && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('otelex:activity-completed'));
+    }
+
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config || {};
     const requestUrl = originalRequest.url || '';

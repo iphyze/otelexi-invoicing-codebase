@@ -344,6 +344,31 @@ const LineItemsBuilder = ({
       unit_price:  product.unit_price,
       tax_rate:    product.tax_rate ?? 7.5,
     });
+
+    // Creation forms start with one EMPTY_ITEM so users can also enter a
+    // free-form line manually. When a catalogue product is selected, reuse
+    // any untouched placeholder row instead of leaving it behind and
+    // appending a second line item. Never replace a row the user has edited.
+    const emptyIndex = items.findIndex((item) => {
+      const quantity = Number(item.quantity ?? 1);
+      const unitPrice = Number(item.unit_price ?? 0);
+      const taxRate = Number(item.tax_rate ?? 7.5);
+      const discountValue = Number(item.discount_value ?? 0);
+
+      return !item.product_id
+        && !String(item.description ?? '').trim()
+        && quantity === 1
+        && unitPrice === 0
+        && taxRate === 7.5
+        && (item.discount_type ?? 'none') === 'none'
+        && discountValue === 0;
+    });
+
+    if (emptyIndex !== -1) {
+      onChange(items.map((item, index) => index === emptyIndex ? newItem : item));
+      return;
+    }
+
     onChange([...items, newItem]);
   };
 

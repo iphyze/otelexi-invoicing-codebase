@@ -26,6 +26,22 @@ const STATUS_META = {
   converted: { label: 'Converted', cls: 'qs-converted', icon: 'fa-arrows-turn-to-dots' },
 };
 
+
+const quotationConversionMessage = (status, target) => {
+  const targetLabel = target === 'proforma' ? 'a proforma invoice' : 'a final invoice';
+  const invoiceNote = target === 'invoice' ? ' Stock will be deducted when the invoice is finalized.' : '';
+
+  if (status === 'draft') {
+    return `This quotation is still in Draft and has not been emailed or accepted. You can still convert it to ${targetLabel}. No email will be sent. The quotation will be marked as converted.${invoiceNote}`;
+  }
+
+  if (status === 'sent') {
+    return `This quotation has been sent but has not been accepted. You can still convert it to ${targetLabel}. No additional email will be sent. The quotation will be marked as converted.${invoiceNote}`;
+  }
+
+  return `Convert this quotation to ${targetLabel}? The quotation will be marked as converted.${invoiceNote}`;
+};
+
 const StatusBadge = ({ status, isExpired }) => {
   const s = isExpired ? STATUS_META.expired : (STATUS_META[status] || STATUS_META.draft);
   return (
@@ -143,14 +159,38 @@ const Quotations = () => {
           await reopenQuotation(id);
           showToast('Quotation reopened to draft.', 'success');
           break;
-        case 'convert-proforma':
-          await convertToProforma(id);
-          showToast('Converted to proforma invoice.', 'success');
+        case 'convert-proforma': {
+          const result = await convertToProforma(id);
+          const createdProforma = result?.data?.proforma;
+          showToast(
+            createdProforma?.proforma_number
+              ? `${createdProforma.proforma_number} created successfully.`
+              : 'Converted to proforma invoice.',
+            'success'
+          );
+          if (createdProforma?.id) {
+            setConfirm({ open: false, type: '', ids: [], id: null, mailProvider: 'system' });
+            navigate(`/proformas/${createdProforma.id}`);
+            return;
+          }
           break;
-        case 'convert-invoice':
-          await convertToInvoice(id);
-          showToast('Converted to invoice.', 'success');
+        }
+        case 'convert-invoice': {
+          const result = await convertToInvoice(id);
+          const createdInvoice = result?.data?.invoice;
+          showToast(
+            createdInvoice?.invoice_number
+              ? `${createdInvoice.invoice_number} created successfully.`
+              : 'Converted to invoice.',
+            'success'
+          );
+          if (createdInvoice?.id) {
+            setConfirm({ open: false, type: '', ids: [], id: null, mailProvider: 'system' });
+            navigate(`/invoices/${createdInvoice.id}`);
+            return;
+          }
           break;
+        }
       }
       setConfirm({ open: false, type: '', ids: [], id: null, mailProvider: 'system' });
     } catch (err) {
@@ -188,10 +228,10 @@ const Quotations = () => {
   const confirmConfig = {
     delete: { title: 'Delete Quotation(s)', msg: `Permanently delete ${confirm.ids?.length} draft quotation(s)?`, btn: 'Yes, Delete', variant: 'danger' },
     send: { title: 'Email Quotation PDF', msg: 'Email this quotation as a PDF attachment to the client email on file? It will be marked as sent after successful delivery.', btn: 'Send with PDF', variant: 'primary' },
-    accept: { title: 'Accept Quotation', msg: 'Mark this quotation as accepted? You can then convert it to a proforma or invoice.', btn: 'Accept', variant: 'success' },
+    accept: { title: 'Accept Quotation', msg: 'Mark this quotation as accepted for workflow tracking? Acceptance is optional for conversion.', btn: 'Accept', variant: 'success' },
     reopen: { title: 'Reopen Quotation', msg: 'Reopen this rejected quotation back to draft for editing?', btn: 'Reopen', variant: 'warning' },
-    'convert-proforma': { title: 'Convert to Proforma', msg: 'Convert this accepted quotation to a proforma invoice? The quotation will be marked as converted.', btn: 'Convert to Proforma', variant: 'primary' },
-    'convert-invoice': { title: 'Convert to Invoice', msg: 'Convert this accepted quotation directly to a final invoice? Stock will be deducted when the invoice is finalized.', btn: 'Convert to Invoice', variant: 'success' },
+    'convert-proforma': { title: 'Convert to Proforma', msg: quotationConversionMessage(confirm.sourceStatus, 'proforma'), btn: 'Convert to Proforma', variant: 'primary' },
+    'convert-invoice': { title: 'Convert to Invoice', msg: quotationConversionMessage(confirm.sourceStatus, 'invoice'), btn: 'Convert to Invoice', variant: 'success' },
   };
 
   return (
@@ -375,7 +415,17 @@ const Quotations = () => {
                           )}
                         </div>
                       </td>
-                      <td><StatusBadge status={q.status} isExpired={q.is_expired} /></td>
+                      <td>
+                        <div className="qt-status-cell">
+                          <StatusBadge status={q.status} isExpired={q.is_expired} />
+                          {!q.is_expired && ['draft', 'sent', 'accepted'].includes(q.status) && (
+                            <span className="qt-workflow-hint is-ready">
+                              <i className="fas fa-arrows-turn-to-dots" />
+                              Conversion available
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td>
                         <div className="qt-row-actions">
                           <button className="qt-action-btn view" title="View" onClick={() => navigate(`/quotations/${q.id}`)}>
@@ -404,12 +454,20 @@ const Quotations = () => {
                               </button>
                             </>
                           )}
-                          {q.status === 'accepted' && (
+                          {!q.is_expired && ['draft', 'sent', 'accepted'].includes(q.status) && (
                             <>
-                              <button className="qt-action-btn proforma" title="Convert to Proforma" onClick={() => setConfirm({ open: true, type: 'convert-proforma', id: q.id })}>
+                              <button
+                                className="qt-action-btn proforma"
+                                title="Convert to Proforma"
+                                onClick={() => setConfirm({ open: true, type: 'convert-proforma', id: q.id, sourceStatus: q.status })}
+                              >
                                 <i className="fas fa-file-circle-check" />
                               </button>
-                              <button className="qt-action-btn invoice" title="Convert to Invoice" onClick={() => setConfirm({ open: true, type: 'convert-invoice', id: q.id })}>
+                              <button
+                                className="qt-action-btn invoice"
+                                title="Convert to Invoice"
+                                onClick={() => setConfirm({ open: true, type: 'convert-invoice', id: q.id, sourceStatus: q.status })}
+                              >
                                 <i className="fas fa-file-invoice" />
                               </button>
                             </>

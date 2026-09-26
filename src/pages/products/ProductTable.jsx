@@ -223,9 +223,14 @@ const ProductTable = () => {
             <i className="fas fa-file-excel" /> Export
           </button>
           {canManage && (
-            <button className="pt-btn-primary" onClick={() => setModal({ type: 'product', data: null })} type="button">
-              <i className="fas fa-plus" /> New Product
-            </button>
+            <>
+              <button className="pt-btn-import" onClick={() => navigate('/products/import')} type="button">
+                <i className="fas fa-file-import" /> Import Products
+              </button>
+              <button className="pt-btn-primary" onClick={() => setModal({ type: 'product', data: null })} type="button">
+                <i className="fas fa-plus" /> New Product
+              </button>
+            </>
           )}
         </div>
       </div>

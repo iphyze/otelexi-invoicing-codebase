@@ -66,16 +66,15 @@
 }
 
 /* ── Light mode surface palette ────────────────
-   Premium "Arctic Blue" mode: still light, but softer and richer
-   than flat white. This keeps the brand blue visible without feeling
-   washed out.
+   Clean off-white base with a very restrained blue cast so the
+   brand accents remain crisp without tinting the whole application.
    ───────────────────────────────────────────── */
 [data-theme="light"],
 .theme-light {
-  --bg-base:       #eef5ff;
-  --bg-surface:    rgba(255, 255, 255, 0.92);
-  --bg-elevated:   #f8fbff;
-  --border:        rgba(37, 99, 235, 0.12);
+  --bg-base:       #f7f8fa;
+  --bg-surface:    rgba(255, 255, 255, 0.94);
+  --bg-elevated:   #fbfbfc;
+  --border:        rgba(37, 99, 235, 0.10);
   --text-primary:  #142033;
   --text-muted:    #5b6b82;
   --text-faint:    #8a9ab0;
@@ -97,8 +96,51 @@ body.theme-dark  { background: #0f172a; color: #f1f5f9; }
 [data-theme="light"] body,
 body.theme-light {
   background:
-    radial-gradient(circle at 7% 0%, rgba(37, 99, 235, 0.11), transparent 34%),
-    radial-gradient(circle at 92% 4%, rgba(14, 165, 233, 0.1), transparent 30%),
-    linear-gradient(135deg, #f8fbff 0%, #eef5ff 46%, #f5f9ff 100%);
+    radial-gradient(circle at 7% 0%, rgba(37, 99, 235, 0.035), transparent 32%),
+    radial-gradient(circle at 92% 4%, rgba(14, 165, 233, 0.025), transparent 28%),
+    linear-gradient(135deg, #fcfcfd 0%, #f7f8fa 46%, #fafbfc 100%);
   color: #142033;
+}
+/* ── Number inputs ─────────────────────────────
+   Keep numeric input behaviour/validation while removing the browser's
+   increment/decrement spinner controls app-wide.
+   ───────────────────────────────────────────── */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ── Form placeholders ─────────────────────────
+   Keep placeholder copy readable without competing with entered values.
+   This applies app-wide to native form fields and the shared SelectInput /
+   DatePicker placeholder states in both themes.
+   ───────────────────────────────────────────── */
+body.theme-dark {
+  --field-placeholder: #8090a8;
+}
+
+body.theme-light {
+  --field-placeholder: #8b98aa;
+}
+
+body.theme-dark input::placeholder,
+body.theme-dark textarea::placeholder,
+body.theme-light input::placeholder,
+body.theme-light textarea::placeholder {
+  color: var(--field-placeholder) !important;
+  opacity: 1 !important;
+}
+
+body.theme-dark .si-placeholder,
+body.theme-dark .dp-placeholder,
+body.theme-light .si-placeholder,
+body.theme-light .dp-placeholder {
+  color: var(--field-placeholder) !important;
+  opacity: 1 !important;
 }

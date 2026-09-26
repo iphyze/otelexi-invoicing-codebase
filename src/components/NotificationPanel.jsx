@@ -5,47 +5,11 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useThemeStore from '../stores/useThemeStore';
 import useNotificationStore from '../stores/useNotificationStore';
+import { getNotificationMeta, getNotificationRoute, notificationTimeAgo } from '../utils/notificationDisplay';
 import './NotificationPanel.css';
 
-// ── Type → icon/colour mapping ─────────────────────────────────────
-const TYPE_META = {
-  'invoice.finalized':    { icon: 'fa-paper-plane',         color: '#1a56db' },
-  'invoice.paid':         { icon: 'fa-circle-check',        color: '#10b981' },
-  'invoice.cancelled':    { icon: 'fa-ban',                 color: '#ef4444' },
-  'invoice.overdue_batch':{ icon: 'fa-triangle-exclamation',color: '#f59e0b' },
-  'payment.received':     { icon: 'fa-money-bill-wave',     color: '#10b981' },
-  'stock.low':            { icon: 'fa-box',                 color: '#f59e0b' },
-  'quotation.accepted':   { icon: 'fa-file-pen',            color: '#8b5cf6' },
-  'proforma.approved':    { icon: 'fa-file-circle-check',   color: '#8b5cf6' },
-};
-
-const getMeta = (type) => TYPE_META[type] || { icon: 'fa-bell', color: '#64748b' };
-
-// Route the user to the relevant record when a notification is clicked
-const getRoute = (modelType, modelId) => {
-  if (!modelType || !modelId) return null;
-  const map = {
-    Invoice:      `/invoices/${modelId}`,
-    Payment:      `/invoices`,          // payments live inside invoice detail
-    Quotation:    `/quotations/${modelId}`,
-    ProformaInvoice: `/proformas/${modelId}`,
-    Product:      `/products/${modelId}`,
-  };
-  return map[modelType] || null;
-};
-
-const timeAgo = (dateStr) => {
-  if (!dateStr) return '';
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins  = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days  = Math.floor(diff / 86400000);
-  if (mins < 1)   return 'Just now';
-  if (mins < 60)  return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7)   return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-};
+// Shared type metadata, route resolution and relative-time formatting live in
+// utils/notificationDisplay so the panel and full page always stay in sync.
 
 // ── Panel ──────────────────────────────────────────────────────────
 const NotificationPanel = ({ triggerRef }) => {
@@ -53,8 +17,8 @@ const NotificationPanel = ({ triggerRef }) => {
   const navigate          = useNavigate();
   const panelRef          = useRef(null);
   const {
-    notifications, unreadCount, loading, meta, filter, panelOpen,
-    closePanel, markRead, markAllRead, setFilter, fetchNotifications,
+    notifications, unreadCount, loading, filter, panelOpen,
+    closePanel, markRead, markAllRead, setFilter,
   } = useNotificationStore();
 
   // Close on outside click
@@ -95,7 +59,7 @@ const NotificationPanel = ({ triggerRef }) => {
 
   const handleNotifClick = async (notif) => {
     if (!notif.is_read) await markRead([notif.id]);
-    const route = getRoute(notif.model_type, notif.model_id);
+    const route = getNotificationRoute(notif.model_type, notif.model_id);
     if (route) { navigate(route); closePanel(); }
   };
 
@@ -169,7 +133,7 @@ const NotificationPanel = ({ triggerRef }) => {
 
         <AnimatePresence>
           {notifications.map((n, i) => {
-            const meta = getMeta(n.type);
+            const meta = getNotificationMeta(n.type);
             return (
               <motion.div
                 key={n.id}
@@ -186,7 +150,7 @@ const NotificationPanel = ({ triggerRef }) => {
                 <div className="np-item-body">
                   <p className="np-item-title">{n.title}</p>
                   <p className="np-item-msg">{n.message}</p>
-                  <span className="np-item-time">{timeAgo(n.created_at)}</span>
+                  <span className="np-item-time">{notificationTimeAgo(n.created_at)}</span>
                 </div>
                 {!n.is_read && <span className="np-unread-dot" />}
               </motion.div>

@@ -530,6 +530,7 @@ const Profile = () => {
         confirmText="Send verification code"
         cancelText="Cancel"
         variant={mfaDialog?.action === 'disable' ? 'warning' : 'primary'}
+        size="wide"
         loading={mfaLoading}
         closeOnBackdrop={!mfaLoading}
         extraContent={(
@@ -558,6 +559,7 @@ const Profile = () => {
         confirmText={mfaDialog?.action === 'disable' ? 'Verify & disable' : 'Verify & enable'}
         cancelText="Cancel"
         variant="primary"
+        size="wide"
         loading={mfaLoading}
         closeOnBackdrop={!mfaLoading && !mfaResending}
         extraContent={(

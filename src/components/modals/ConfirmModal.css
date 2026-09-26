@@ -38,6 +38,10 @@
     transform 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
+.cm-modal.cm-modal-wide {
+  max-width: 440px;
+}
+
 .cm-modal.cm-modal-in {
   opacity: 1;
   transform: translateY(0) scale(1);

@@ -51,6 +51,20 @@
   box-shadow: 0 22px 48px rgba(0, 0, 0, 0.2);
 }
 
+.theme-dark .qf-hero::after {
+  width: 340px;
+  height: 220px;
+  right: -78px;
+  bottom: -98px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 32% 38%, rgba(96, 165, 250, 0.16), rgba(59, 130, 246, 0.08) 28%, rgba(30, 64, 175, 0.03) 52%, transparent 74%),
+    radial-gradient(circle at 60% 62%, rgba(15, 23, 42, 0.28), transparent 66%);
+  filter: blur(44px);
+  opacity: 0.72;
+  transform: rotate(-10deg);
+}
+
 .qf-hero-proforma::before {
   background:
     linear-gradient(120deg, rgba(16, 185, 129, 0.08), rgba(26, 86, 219, 0.04)),
@@ -59,6 +73,13 @@
 
 .qf-hero-proforma::after {
   background: rgba(16, 185, 129, 0.1);
+}
+
+.theme-dark .qf-hero-proforma::after {
+  background:
+    radial-gradient(circle at 32% 38%, rgba(52, 211, 153, 0.16), rgba(16, 185, 129, 0.08) 28%, rgba(5, 150, 105, 0.03) 52%, transparent 74%),
+    radial-gradient(circle at 60% 62%, rgba(15, 23, 42, 0.28), transparent 66%);
+  opacity: 0.72;
 }
 
 .qf-hero-content h2 {

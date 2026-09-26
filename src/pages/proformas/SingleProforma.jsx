@@ -17,6 +17,19 @@ import PDFDownloadButton from '../../components/pdf/PDFDownloadButton';
 import { formatCurrencyDecimals, STATUS_META } from '../../utils/helper';
 import Skeleton from '../../components/Sekeleton';
 
+
+const proformaConversionMessage = (status) => {
+  if (status === 'draft') {
+    return 'This proforma is still in Draft and has not been emailed or approved. You can still convert it to a final invoice. No email will be sent. The proforma will be marked as converted. Stock will be deducted when the invoice is finalized.';
+  }
+
+  if (status === 'sent') {
+    return 'This proforma has been sent but has not been approved. You can still convert it to a final invoice. No additional email will be sent. The proforma will be marked as converted. Stock will be deducted when the invoice is finalized.';
+  }
+
+  return 'Convert this proforma to a final invoice? The proforma will be marked as converted. Stock will be deducted when the invoice is finalized.';
+};
+
 const SingleProforma = () => {
   const { id } = useParams();
   const navigate  = useNavigate();
@@ -65,10 +78,22 @@ const SingleProforma = () => {
           showToast('Proforma deleted.', 'success');
           navigate('/proformas');
           return;
-        case 'convert-invoice':
-          await convertToInvoice(id);
-          showToast('Converted to invoice successfully.', 'success');
+        case 'convert-invoice': {
+          const result = await convertToInvoice(id);
+          const createdInvoice = result?.data?.invoice;
+          showToast(
+            createdInvoice?.invoice_number
+              ? `${createdInvoice.invoice_number} created successfully.`
+              : 'Converted to invoice successfully.',
+            'success'
+          );
+          if (createdInvoice?.id) {
+            setConfirm({ open: false, type: '' });
+            navigate(`/invoices/${createdInvoice.id}`);
+            return;
+          }
           break;
+        }
       }
       setConfirm({ open: false, type: '' });
       setRetryCount((c) => c + 1);
@@ -90,9 +115,9 @@ const SingleProforma = () => {
   };
 
   const confirmConfig = {
-    approve:          { title: 'Approve Proforma',     msg: 'Mark this proforma as approved? You can then convert it to a final invoice.',     btn: 'Approve',           variant: 'success' },
+    approve:          { title: 'Approve Proforma',     msg: 'Mark this proforma as approved for workflow tracking? Approval is optional for conversion.',     btn: 'Approve',           variant: 'success' },
     delete:           { title: 'Delete Proforma',      msg: 'Permanently delete this draft proforma? This cannot be undone.',                  btn: 'Yes, Delete',       variant: 'danger' },
-    'convert-invoice':{ title: 'Convert to Invoice',  msg: 'Convert this approved proforma to a final invoice? Stock deducts on finalization.', btn: 'Convert to Invoice', variant: 'success' },
+    'convert-invoice':{ title: 'Convert to Invoice',  msg: proformaConversionMessage(p?.status), btn: 'Convert to Invoice', variant: 'success' },
   };
 
   return (
@@ -189,13 +214,37 @@ const SingleProforma = () => {
                       </button>
                     </>
                   )}
-                  {p.status === 'approved' && isMine && (
+                  {!p.is_expired && ['draft', 'sent', 'approved'].includes(p.status) && isMine && (
                     <button className="sp-act-btn invoice" onClick={() => setConfirm({ open: true, type: 'convert-invoice' })} type="button">
                       <i className="fas fa-file-invoice" /> Convert to Invoice
                     </button>
                   )}
                   
                 </div>
+
+                {!p.is_expired && ['draft', 'sent', 'approved'].includes(p.status) && (
+                  <div className={`sp-workflow-guide is-${p.status}`}>
+                    <div className="sp-workflow-copy">
+                      <span className="sp-workflow-label">Conversion options</span>
+                      <strong>
+                        {p.status === 'draft' && 'Conversion is available now. Emailing and approval are optional workflow actions.'}
+                        {p.status === 'sent' && 'Conversion is available now. Approval remains optional for workflow tracking.'}
+                        {p.status === 'approved' && 'Conversion is available now to a final invoice.'}
+                      </strong>
+                    </div>
+                    <div className="sp-workflow-steps" aria-label="Proforma conversion options">
+                      <span className={`sp-workflow-step ${['sent', 'approved'].includes(p.status) ? 'is-done' : ''}`}>
+                        <i className="fas fa-paper-plane" /> {['sent', 'approved'].includes(p.status) ? 'Email sent' : 'Email PDF (optional)'}
+                      </span>
+                      <span className={`sp-workflow-step ${p.status === 'approved' ? 'is-done' : ''}`}>
+                        <i className="fas fa-circle-check" /> {p.status === 'approved' ? 'Approved' : 'Approve (optional)'}
+                      </span>
+                      <span className="sp-workflow-step is-current">
+                        <i className="fas fa-file-invoice" /> Convert to Invoice
+                      </span>
+                    </div>
+                  </div>
+                )}
               </motion.div>
 
               {/* ── Two-column detail grid ── */}
