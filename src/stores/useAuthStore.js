@@ -53,7 +53,7 @@ const useAuthStore = create((set, get) => ({
     set({ status: 'checking' });
     try {
       await initialiseCsrfToken();
-      const response = await api.get('/auth/session');
+      const response = await api.get('/auth/session', { suppressSessionExpiredNotice: true });
       const data = response.data?.data || {};
       set({
         user: data.user || null,

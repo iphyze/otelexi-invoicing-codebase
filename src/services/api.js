@@ -66,27 +66,13 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => {
-    // Any successful business mutation may have generated a backend notification.
-    // Signal the authenticated shell so the bell/panel can refresh immediately
-    // instead of waiting for the next background polling interval.
-    const method = response.config?.method || 'get';
-    const requestUrl = response.config?.url || '';
-    const shouldSignalActivity = isStateChangingMethod(method)
-      && !requestUrl.includes('/notifications/mark-read')
-      && !requestUrl.includes('/auth/');
-
-    if (shouldSignalActivity && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('otelex:activity-completed'));
-    }
-
-    return response;
-  },
+  (response) => response,
   async (error) => {
     const originalRequest = error.config || {};
     const requestUrl = originalRequest.url || '';
     const shouldSkipRefresh = originalRequest.skipAuthRefresh
       || AUTH_NO_REFRESH_ENDPOINTS.some((endpoint) => requestUrl.includes(endpoint));
+    const suppressSessionExpiredNotice = originalRequest.suppressSessionExpiredNotice === true;
 
     if (error.response?.status === 419 && !originalRequest._csrfRetry && !requestUrl.includes('/auth/csrf')) {
       originalRequest._csrfRetry = true;
@@ -105,10 +91,12 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && terminalSessionReasons.includes(sessionReason)) {
       setCsrfToken(null);
-      onSessionExpired({
-        reason: sessionReason,
-        message: error.response?.data?.message || null,
-      });
+      if (!suppressSessionExpiredNotice) {
+        onSessionExpired({
+          reason: sessionReason,
+          message: error.response?.data?.message || null,
+        });
+      }
       return Promise.reject(error);
     }
 
@@ -140,10 +128,12 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       setCsrfToken(null);
-      onSessionExpired({
-        reason: refreshError.response?.data?.reason || 'session_expired',
-        message: refreshError.response?.data?.message || null,
-      });
+      if (!suppressSessionExpiredNotice) {
+        onSessionExpired({
+          reason: refreshError.response?.data?.reason || 'session_expired',
+          message: refreshError.response?.data?.message || null,
+        });
+      }
       return Promise.reject(refreshError);
     }
   }
