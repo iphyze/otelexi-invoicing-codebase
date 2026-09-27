@@ -19,6 +19,7 @@ import SingleClient from "./pages/clients/SingleClient";
 import Products from "./pages/products/Products";
 import SingleProduct from "./pages/products/SingleProduct";
 import Categories from "./pages/products/Categories";
+import ProductImport from "./pages/products/ProductImport";
 import Quotations from "./pages/quotations/Quotations";
 import CreateQuotation from "./pages/quotations/CreateQuotation";
 import SingleQuotation from "./pages/quotations/SingleQuotation";
@@ -92,8 +93,9 @@ const App = () => {
 
         {/* Products Routes - Protected */}
         <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-        <Route path="/products/:id" element={<ProtectedRoute><SingleProduct /></ProtectedRoute>} />
+        <Route path="/products/import" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin', 'admin']}><ProductImport /></RoleRoute></ProtectedRoute>} />
         <Route path="/products/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
+        <Route path="/products/:id" element={<ProtectedRoute><SingleProduct /></ProtectedRoute>} />
 
         {/* Quotations Routes - NEEDS PROTECTION */}
         <Route path="/quotations" element={<ProtectedRoute><Quotations/></ProtectedRoute>} />

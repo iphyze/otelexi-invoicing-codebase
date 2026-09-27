@@ -22,8 +22,33 @@ const watchInstallingWorker = (registration) => {
   });
 };
 
+const cleanupDevelopmentPwa = async () => {
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter((key) => key.startsWith('otelex-pwa-'))
+          .map((key) => caches.delete(key)),
+      );
+    }
+  } catch (error) {
+    console.warn('Otelex development PWA cleanup failed.', error);
+  }
+};
+
 export const registerOtelexServiceWorker = () => {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+  // Do not let a service worker cache Vite's /src modules during development.
+  // PWA behaviour remains available in production builds / `vite preview`.
+  if (import.meta.env.DEV) {
+    cleanupDevelopmentPwa();
+    return;
+  }
 
   window.addEventListener('load', async () => {
     try {
