@@ -9,6 +9,7 @@ import SelectInput from '../../components/SelectInput';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import { ClientFormModal, ContactFormModal } from './ClientModals';
 import './ClientTable.css';
+import { getPaymentTermLabel } from '../../utils/paymentTerms';
 
 const STATUS_OPTS = [
   { value: 'active', label: 'Active', icon: 'fa-circle-check' },
@@ -304,7 +305,7 @@ const ClientTable = () => {
                   </td>
                   <td>
                     <span className="ct-terms">
-                      {client.payment_terms === 'due_on_receipt' ? 'Due on Receipt' : 'Net 7'}
+                      {getPaymentTermLabel(client.payment_terms)}
                     </span>
                   </td>
                   <td><StatusBadge active={client.is_active === 1} /></td>

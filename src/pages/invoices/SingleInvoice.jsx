@@ -24,6 +24,7 @@ import { formatCurrencyDecimals, STATUS_META } from '../../utils/helper';
 import Skeleton from '../../components/Sekeleton';
 import SendToClientModal from '../../components/modals/SendToClientModal';
 import MailProviderSelect from '../../components/mail/MailProviderSelect';
+import { getPaymentTermLabel } from '../../utils/paymentTerms';
 
 const METHOD_ICONS = {
   bank_transfer: 'fa-building-columns',
@@ -420,7 +421,7 @@ const SingleInvoice = () => {
                     { icon: 'fa-receipt',        label: 'Tax ID',        value: inv.client?.tax_id },
                     { icon: 'fa-calendar-plus',  label: 'Issued',        value: new Date(inv.issue_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) },
                     { icon: 'fa-calendar-check', label: 'Due',           value: new Date(inv.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) },
-                    { icon: 'fa-clock',          label: 'Payment Terms', value: inv.payment_terms === 'net_7' ? 'Net 7 Days' : 'Due on Receipt' },
+                    { icon: 'fa-clock',          label: 'Payment Terms', value: getPaymentTermLabel(inv.payment_terms) },
                     { icon: 'fa-user-shield',    label: 'Approved By',   value: inv.approved_by?.name },
                   ].map((row) => row.value ? (
                     <div key={row.label} className="sinv-info-row">

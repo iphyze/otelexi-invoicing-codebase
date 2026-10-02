@@ -11,6 +11,7 @@ import useToastStore from '../../stores/useToastStore';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import { ClientFormModal, ContactFormModal } from './ClientModals';
 import './SingleClient.css';
+import { getPaymentTermLabel } from '../../utils/paymentTerms';
 
 // ── Helper components ─────────────────────────────────────────────
 
@@ -228,7 +229,7 @@ const SingleClient = () => {
                       </Badge>
                       <Badge variant="currency">{client.currency}</Badge>
                       <Badge variant="terms">
-                        {client.payment_terms === 'due_on_receipt' ? 'Due on Receipt' : 'Net 7'}
+                        {getPaymentTermLabel(client.payment_terms)}
                       </Badge>
                     </div>
                     <p className="sc-hero-since">

@@ -10,6 +10,10 @@ const reportService = {
   getRevenueByCategory:(params) => api.get('/reports/revenue-by-category', { params }),
   getDocumentFlow:     (params) => api.get('/reports/document-flow',       { params }),
   getClientStatement:  (params) => api.get('/reports/client-statement',    { params }),
+  downloadClientStatementExcel: (params) => api.get('/reports/client-statement', {
+    params: { ...params, format: 'xlsx' },
+    responseType: 'blob',
+  }),
   getStockLevels:      (params) => api.get('/reports/stock-levels',        { params }),
 };
 

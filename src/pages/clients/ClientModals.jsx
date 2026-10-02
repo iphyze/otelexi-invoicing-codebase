@@ -5,6 +5,7 @@ import useThemeStore from '../../stores/useThemeStore';
 import useClientStore from '../../stores/useClientStore';
 import useToastStore from '../../stores/useToastStore';
 import SelectInput from '../../components/SelectInput';
+import { PAYMENT_TERM_OPTIONS } from '../../utils/paymentTerms';
 import './ClientModals.css';
 
 // ── Options ───────────────────────────────────────────────────────
@@ -13,10 +14,7 @@ const CURRENCY_OPTIONS = [
   { value: 'NGN', label: '₦ Nigerian Naira (NGN)', icon: 'fa-money-bill' },
   { value: 'USD', label: '$ US Dollar (USD)', icon: 'fa-dollar-sign' },
 ];
-const PAYMENT_OPTIONS = [
-  { value: 'due_on_receipt', label: 'Due on Receipt', icon: 'fa-clock' },
-  { value: 'net_7', label: 'Net 7 Days', icon: 'fa-calendar-days' },
-];
+const PAYMENT_OPTIONS = PAYMENT_TERM_OPTIONS;
 const COUNTRY_OPTIONS = [
   { value: 'Nigeria', label: 'Nigeria' },
   { value: 'Ghana', label: 'Ghana' },

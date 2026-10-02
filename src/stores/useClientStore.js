@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import clientService from '../services/clientService';
+import { getPaymentTermLabel } from '../utils/paymentTerms';
 
 const DEFAULT_FILTERS = {
   search: '', status: 'active', currency: '',
@@ -149,7 +150,7 @@ const useClientStore = create(
           'Billing Address':  c.billing_address || '',
           'Shipping Address': c.shipping_address || '',
           'Currency':         c.currency || '',
-          'Payment Terms':    c.payment_terms === 'due_on_receipt' ? 'Due on Receipt' : (c.payment_terms || ''),
+          'Payment Terms':    getPaymentTermLabel(c.payment_terms),
           'Tax ID':           c.tax_id || '',
           'Status':           c.is_active === 1 ? 'Active' : 'Inactive',
         }));

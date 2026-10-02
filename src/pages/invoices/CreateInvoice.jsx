@@ -10,6 +10,7 @@ import useToastStore from '../../stores/useToastStore';
 import useClientStore from '../../stores/useClientStore';
 import SelectInput from '../../components/SelectInput';
 import DatePicker from '../../components/DatePicker';
+import { PAYMENT_TERM_OPTIONS, calculatePaymentDueDate, getPaymentTermLabel } from '../../utils/paymentTerms';
 import LineItemsBuilder, { EMPTY_ITEM, calcTotals } from '../quotations/LineItemsBuilder';
 import { ClientFormModal } from '../clients/ClientModals';
 import '../quotations/QuotationForm.css';
@@ -19,10 +20,7 @@ const CURRENCY_OPTS = [
   { value: 'NGN', label: '₦ Nigerian Naira (NGN)', icon: 'fa-money-bill' },
   { value: 'USD', label: '$ US Dollar (USD)',       icon: 'fa-dollar-sign' },
 ];
-const TERMS_OPTS = [
-  { value: 'due_on_receipt', label: 'Due on Receipt' },
-  { value: 'net_7',          label: 'Net 7 Days' },
-];
+const TERMS_OPTS = PAYMENT_TERM_OPTIONS;
 
 const validate = (form, items) => {
   const e = {};
@@ -81,11 +79,7 @@ const CreateInvoice = () => {
     }
   };
 
-  const dueDate = form.issue_date
-    ? form.payment_terms === 'due_on_receipt'
-      ? form.issue_date
-      : new Date(new Date(form.issue_date).getTime() + 7 * 86400000).toISOString().split('T')[0]
-    : '—';
+  const dueDate = form.issue_date ? calculatePaymentDueDate(form.issue_date, form.payment_terms) : '—';
 
   const totals = calcTotals(items, form.discount_type, form.discount_value);
   const clientOptions = clients.map((c) => ({ value: c.id, label: `${c.company_name} — ${c.city}`, icon: 'fa-building' }));
@@ -242,7 +236,7 @@ const CreateInvoice = () => {
               <div className="qf-info-chips">
                 <div className="qf-info-chip"><i className="fas fa-calendar-plus" /><span>Issue: {form.issue_date || '—'}</span></div>
                 <div className="qf-info-chip"><i className="fas fa-calendar-check" /><span>Due: {dueDate}</span></div>
-                <div className="qf-info-chip"><i className="fas fa-clock" /><span>Terms: {form.payment_terms === 'net_7' ? 'Net 7 Days' : 'Due on Receipt'}</span></div>
+                <div className="qf-info-chip"><i className="fas fa-clock" /><span>Terms: {getPaymentTermLabel(form.payment_terms)}</span></div>
                 <div className="qf-info-chip"><i className="fas fa-list-ol" /><span>{items.length} item{items.length !== 1 ? 's' : ''}</span></div>
               </div>
               <div className="qf-actions">

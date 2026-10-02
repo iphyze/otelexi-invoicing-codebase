@@ -103,6 +103,7 @@ const buildMenu = (role) => {
         { label: 'VAT Report', icon: 'fas fa-percent', to: '/reports/vat' },
         { label: 'Staff Performance', icon: 'fas fa-user-tie', to: '/reports/staff' },
         { label: 'Outstanding', icon: 'fas fa-clock', to: '/reports/outstanding' },
+        { label: 'Client Statement', icon: 'fas fa-file-invoice-dollar', to: '/reports/client-statement' },
         { label: 'Stock Levels', icon: 'fas fa-boxes-stacked', to: '/reports/stock-levels' },
       ],
     });

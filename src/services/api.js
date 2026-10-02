@@ -29,6 +29,45 @@ const AUTH_NO_REFRESH_ENDPOINTS = [
 const isStateChangingMethod = (method = 'get') =>
   ['post', 'put', 'patch', 'delete'].includes(method.toLowerCase());
 
+const MAX_GET_RETRIES = 2;
+const RETRYABLE_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const retryAfterMs = (error, retryNumber) => {
+  const retryAfter = error.response?.headers?.['retry-after'];
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds >= 0) {
+      return Math.min(seconds * 1000, 5000);
+    }
+
+    const retryDate = Date.parse(retryAfter);
+    if (!Number.isNaN(retryDate)) {
+      return Math.max(0, Math.min(retryDate - Date.now(), 5000));
+    }
+  }
+
+  // Short exponential backoff: ~350ms, then ~700ms.
+  return 350 * (2 ** Math.max(0, retryNumber - 1));
+};
+
+const shouldRetryGetRequest = (error, config) => {
+  if (!config || String(config.method || 'get').toLowerCase() !== 'get') return false;
+  if (config.skipRequestRetry === true) return false;
+  if (axios.isCancel(error) || error.code === 'ERR_CANCELED') return false;
+
+  const retryCount = Number(config._getRetryCount || 0);
+  if (retryCount >= MAX_GET_RETRIES) return false;
+
+  // No response generally means a transient network/connection failure.
+  if (!error.response) {
+    return error.code !== 'ERR_BAD_REQUEST';
+  }
+
+  return RETRYABLE_STATUS_CODES.has(Number(error.response.status));
+};
+
 export const setCsrfToken = (value) => {
   csrfToken = typeof value === 'string' && value.length > 0 ? value : null;
 };
@@ -66,13 +105,34 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Any successful business mutation may have generated a backend notification.
+    // Signal the authenticated shell so the bell/panel can refresh immediately.
+    const method = response.config?.method || 'get';
+    const requestUrl = response.config?.url || '';
+    const shouldSignalActivity = isStateChangingMethod(method)
+      && !requestUrl.includes('/notifications/mark-read')
+      && !requestUrl.includes('/auth/');
+
+    if (shouldSignalActivity && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('otelex:activity-completed'));
+    }
+
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config || {};
     const requestUrl = originalRequest.url || '';
     const shouldSkipRefresh = originalRequest.skipAuthRefresh
       || AUTH_NO_REFRESH_ENDPOINTS.some((endpoint) => requestUrl.includes(endpoint));
     const suppressSessionExpiredNotice = originalRequest.suppressSessionExpiredNotice === true;
+
+    if (shouldRetryGetRequest(error, originalRequest)) {
+      const retryNumber = Number(originalRequest._getRetryCount || 0) + 1;
+      originalRequest._getRetryCount = retryNumber;
+      await sleep(retryAfterMs(error, retryNumber));
+      return api(originalRequest);
+    }
 
     if (error.response?.status === 419 && !originalRequest._csrfRetry && !requestUrl.includes('/auth/csrf')) {
       originalRequest._csrfRetry = true;

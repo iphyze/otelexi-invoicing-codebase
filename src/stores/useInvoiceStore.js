@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import invoiceService from '../services/invoiceService';
+import { getPaymentTermLabel } from '../utils/paymentTerms';
 
 const DEFAULT_FILTERS = {
   search: '', status: '', client_id: '',
@@ -163,7 +164,7 @@ const useInvoiceStore = create(
           'Refunded':      inv.refunded_amount || 0,
           'Net Paid':      (Number(inv.amount_paid || 0) - Number(inv.refunded_amount || 0)),
           'Balance Due':   inv.balance_due,
-          'Payment Terms': inv.payment_terms,
+          'Payment Terms': getPaymentTermLabel(inv.payment_terms),
           'Status':        inv.status,
           'Items':         inv.item_count,
           'Payments':      inv.payment_count,

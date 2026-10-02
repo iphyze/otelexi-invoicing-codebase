@@ -46,6 +46,7 @@ import VatReport from "./pages/reports/VatReport";
 import StaffPerformance from "./pages/reports/StaffPerformance";
 import Outstanding from "./pages/reports/Outstanding";
 import StockLevels from "./pages/reports/StockLevels";
+import ClientStatement from "./pages/reports/ClientStatement";
 import Notifications from "./pages/notifications/Notifications";
 import PreviewInvoice from "./pages/invoices/PreviewInvoice";
 import PreviewQuotation from "./pages/quotations/PreviewQuotation";
@@ -143,6 +144,7 @@ const App = () => {
         <Route path="/reports/staff"         element={<ProtectedRoute><StaffPerformance /></ProtectedRoute>} />
         <Route path="/reports/outstanding"   element={<ProtectedRoute><Outstanding /></ProtectedRoute>} />
         <Route path="/reports/stock-levels"  element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin', 'admin', 'accounting']}><StockLevels /></RoleRoute></ProtectedRoute>} />
+        <Route path="/reports/client-statement" element={<ProtectedRoute><RoleRoute allowedRoles={['super_admin', 'admin', 'accounting']}><ClientStatement /></RoleRoute></ProtectedRoute>} />
 
         <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
