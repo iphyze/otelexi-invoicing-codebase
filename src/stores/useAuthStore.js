@@ -51,17 +51,24 @@ const useAuthStore = create((set, get) => ({
     // Remove the legacy persisted JWT left by earlier releases.
     localStorage.removeItem('auth-storage');
     set({ status: 'checking' });
+
     try {
       await initialiseCsrfToken();
-      const response = await api.get('/auth/session', { suppressSessionExpiredNotice: true });
+      const response = await api.get('/auth/session', { authBootstrap: true });
       const data = response.data?.data || {};
+      const authenticated = data.authenticated !== false && Boolean(data.user);
+
       set({
-        user: data.user || null,
-        status: 'authenticated',
+        user: authenticated ? data.user : null,
+        status: authenticated ? 'authenticated' : 'guest',
         initialized: true,
-        sessionPolicy: normalizeSessionPolicy(data.session_policy),
+        sessionPolicy: authenticated
+          ? normalizeSessionPolicy(data.session_policy)
+          : DEFAULT_SESSION_POLICY,
       });
-    } catch (error) {
+    } catch {
+      // Bootstrap is intentionally silent. A first-time visitor or a browser
+      // whose old refresh cookie has expired should simply land as a guest.
       set({
         user: null,
         status: 'guest',

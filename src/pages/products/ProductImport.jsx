@@ -227,7 +227,135 @@ const fetchAllProductCategories = async () => {
   return categories;
 };
 
-const errorFor = (row, field) => row.errors?.find((error) => error.field === field)?.message || '';
+const inferErrorField = (message = '') => {
+  const value = String(message || '').toLowerCase();
+  if (value.includes('category')) return 'category_id';
+  if (value.includes('product name')) return 'name';
+  if (value.includes('sku')) return 'sku';
+  if (value.includes('unit price')) return 'unit_price';
+  if (value.includes('unit of measure')) return 'unit_of_measure';
+  if (value.includes('tax type')) return 'tax_type';
+  if (value.includes('tax rate')) return 'tax_rate';
+  if (value.includes('stock')) return 'stock_quantity';
+  if (value.includes('reorder')) return 'reorder_level';
+  if (value.includes('status')) return 'is_active';
+  return '';
+};
+
+const normaliseErrors = (errors = []) => (Array.isArray(errors) ? errors : [])
+  .map((error) => {
+    if (typeof error === 'string') {
+      return { field: inferErrorField(error), message: error };
+    }
+    return {
+      field: error?.field || inferErrorField(error?.message),
+      message: error?.message || String(error || ''),
+    };
+  })
+  .filter((error) => error.message);
+
+const normalisePreviewRow = (row = {}) => {
+  const data = row?.data && typeof row.data === 'object' ? row.data : row;
+  const valid = row?.valid ?? row?.is_valid ?? data?.valid ?? data?.is_valid ?? null;
+  return {
+    ...row,
+    row_number: row?.row_number ?? data?.row_number,
+    data,
+    valid,
+    errors: normaliseErrors(row?.errors ?? row?.validation_errors ?? data?.errors ?? data?.validation_errors ?? []),
+  };
+};
+
+const normaliseCategoryRow = (row = {}) => {
+  const data = row?.data && typeof row.data === 'object' ? row.data : row;
+  const isNew = row?.is_new ?? row?.will_create ?? data?.is_new ?? data?.will_create ?? false;
+  const valid = row?.valid ?? row?.is_valid ?? data?.valid ?? data?.is_valid ?? true;
+  return {
+    ...row,
+    row_number: row?.row_number ?? data?.row_number,
+    data: {
+      ...data,
+      category_id: data?.category_id ?? data?.id ?? data?.temporary_id ?? '',
+      name: data?.name ?? data?.category_name ?? '',
+      category_name: data?.category_name ?? data?.name ?? '',
+      description: data?.description ?? '',
+      is_new: Boolean(isNew),
+      will_create: Boolean(isNew),
+    },
+    valid: Boolean(valid),
+    is_new: Boolean(isNew),
+    errors: normaliseErrors(row?.errors ?? data?.errors ?? []),
+  };
+};
+
+const extractCategoryRows = (preview, fallback = []) => {
+  if (Array.isArray(preview?.categories)) return preview.categories;
+  if (Array.isArray(preview?.categories?.rows)) return preview.categories.rows;
+  if (Array.isArray(preview?.category_rows)) return preview.category_rows;
+  return fallback;
+};
+
+const normalisePreviewPayload = (preview = {}, fallbackCategories = []) => {
+  const rows = (preview.rows || preview.products || []).map(normalisePreviewRow);
+  const categories = extractCategoryRows(preview, fallbackCategories).map(normaliseCategoryRow);
+  const valid = rows.filter((row) => row.valid === true).length;
+  const invalid = rows.filter((row) => row.valid === false).length;
+  const invalidCategories = categories.filter((row) => row.valid === false).length;
+  const newCategories = categories.filter((row) => row.valid === true && row.is_new === true).length;
+  const explicitCanImport = preview?.summary?.can_import
+    ?? preview?.summary?.canImport
+    ?? preview?.can_import
+    ?? preview?.canImport;
+  const canImport = explicitCanImport ?? (rows.length > 0 && invalid === 0 && invalidCategories === 0);
+
+  const summary = {
+    ...(preview.summary || {}),
+    total: Number(preview?.summary?.total ?? preview?.summary?.total_rows ?? rows.length),
+    valid: Number(preview?.summary?.valid ?? preview?.summary?.valid_count ?? valid),
+    invalid: Number(preview?.summary?.invalid ?? preview?.summary?.invalid_count ?? invalid),
+    invalid_categories: Number(preview?.summary?.invalid_categories ?? invalidCategories),
+    new_categories: Number(preview?.summary?.new_categories ?? preview?.summary?.new_category_count ?? newCategories),
+    can_import: Boolean(canImport),
+  };
+
+  const providedOptions = Array.isArray(preview?.options?.categories) ? preview.options.categories : [];
+  const fallbackOptions = categories
+    .filter((row) => row.valid)
+    .map((row) => {
+      const category = row.data || row;
+      return {
+        id: category.category_id ?? category.id ?? null,
+        name: category.name || category.category_name,
+        is_new: row.is_new === true,
+      };
+    })
+    .filter((category) => category.name);
+
+  const optionMap = new Map();
+  [...providedOptions, ...fallbackOptions].forEach((category) => {
+    const name = String(category?.name || category?.category_name || '').trim();
+    if (!name) return;
+    const key = name.toLowerCase();
+    const existing = optionMap.get(key);
+    optionMap.set(key, {
+      ...(existing || {}),
+      ...category,
+      name,
+      is_new: Boolean(category?.is_new ?? category?.will_create ?? existing?.is_new),
+    });
+  });
+
+  return {
+    ...preview,
+    rows,
+    categories,
+    summary,
+    options: { ...(preview.options || {}), categories: Array.from(optionMap.values()) },
+  };
+};
+
+const errorFor = (row, field) => normaliseErrors(row?.errors || [])
+  .find((error) => error.field === field)?.message || '';
 
 const ProductImport = () => {
   const navigate = useNavigate();
@@ -252,14 +380,35 @@ const ProductImport = () => {
     document.title = 'Otelex | Import Products';
   }, []);
 
-  const categoryOptions = useMemo(
-    () => (options.categories || []).map((category) => ({
-      value: category.name,
-      label: category.is_new ? `${category.name} (New)` : category.name,
-      icon: category.is_new ? 'fa-circle-plus' : 'fa-tag',
-    })),
-    [options.categories]
-  );
+  const categoryOptions = useMemo(() => {
+    const categoryMap = new Map();
+
+    (options.categories || []).forEach((category) => {
+      const name = String(category?.name || category?.category_name || '').trim();
+      if (!name) return;
+      categoryMap.set(name.toLowerCase(), {
+        value: name,
+        label: category.is_new ? `${name} (New)` : name,
+        icon: category.is_new ? 'fa-circle-plus' : 'fa-tag',
+      });
+    });
+
+    categoryRows.forEach((row) => {
+      const category = row.data || row;
+      const name = String(category?.name || category?.category_name || '').trim();
+      if (!name) return;
+      const key = name.toLowerCase();
+      if (!categoryMap.has(key)) {
+        categoryMap.set(key, {
+          value: name,
+          label: row.is_new ? `${name} (New)` : name,
+          icon: row.is_new ? 'fa-circle-plus' : 'fa-tag',
+        });
+      }
+    });
+
+    return Array.from(categoryMap.values());
+  }, [options.categories, categoryRows]);
 
   const currentSummary = useMemo(() => {
     if (!rows.length) return { total: 0, valid: 0, invalid: 0, pending: 0 };
@@ -278,12 +427,14 @@ const ProductImport = () => {
     invalidCategories: categoryRows.filter((row) => row?.valid === false),
   }), [categoryRows]);
 
-  const applyPreview = (preview) => {
-    setRows(preview.rows || []);
-    setCategoryRows(preview.categories?.rows || categoryRows);
-    setSummary(preview.summary || null);
-    setOptions(preview.options || { categories: [] });
+  const applyPreview = (preview, fallbackCategories = categoryRows) => {
+    const normalised = normalisePreviewPayload(preview, fallbackCategories);
+    setRows(normalised.rows);
+    setCategoryRows(normalised.categories);
+    setSummary(normalised.summary);
+    setOptions(normalised.options);
     setDirty(false);
+    return normalised;
   };
 
   const validateRows = async (rowsToValidate = rows, { silent = false, categoriesToValidate = categoryRows } = {}) => {
@@ -295,8 +446,7 @@ const ProductImport = () => {
         rows: rowsToValidate.map((row) => row.data || row),
         categories: categoriesToValidate.map((row) => row.data || row),
       });
-      const preview = response.data.data;
-      applyPreview(preview);
+      const preview = applyPreview(response.data.data || {}, categoriesToValidate);
       if (!silent) {
         showToast(
           response.data.message || 'Product rows validated.',
@@ -492,7 +642,7 @@ const ProductImport = () => {
     setImporting(true);
     try {
       const response = await productService.importProducts({
-        rows: rows.map((row) => row.data),
+        rows: rows.map((row) => row.data || row),
         categories: categoryRows.map((row) => row.data || row),
       });
       showToast(response.data.message || 'Products imported successfully.', 'success');
@@ -500,7 +650,7 @@ const ProductImport = () => {
     } catch (error) {
       const validationData = error.response?.data?.data;
       if (validationData?.rows) {
-        applyPreview(validationData);
+        applyPreview(validationData, categoryRows);
       }
       showToast(error.response?.data?.message || 'Could not import products.', 'error');
     } finally {
